@@ -150,9 +150,14 @@ uv run swiss-legal-evals-plot
 
 Outputs: `results/results/<model>/results_*.json`, `results/summary_long.csv`, `results/summary.csv`, `plots/<family>.html`.
 
-The completed 2026 full-run outputs are committed under `results/`, with the
-leaderboard and analysis in [`results/REPORT.md`](results/REPORT.md). Scratch
-runs such as `results_smoke*` and `results_cap_compare_*` remain gitignored.
+The completed 2026 full-run outputs are mirrored in the public Hugging Face bucket
+[`joelniklaus/SwissLegalEvals`](https://huggingface.co/buckets/joelniklaus/SwissLegalEvals):
+
+```bash
+hf buckets sync hf://buckets/joelniklaus/SwissLegalEvals results
+```
+
+Local result directories (`results/`, `results_smoke*`, `results_cap_compare_*`) are gitignored to keep the repository lightweight.
 
 ### Task profiles and generation caps
 

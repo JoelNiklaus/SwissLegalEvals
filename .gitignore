@@ -218,6 +218,7 @@ __marimo__/
 .streamlit/secrets.toml
 
 # SwissLegalEvals outputs
+results/
 results_*/
 results_smoke/
 results_smoke20/
