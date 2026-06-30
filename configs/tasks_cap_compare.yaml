@@ -1,0 +1,31 @@
+# Temporary profiles for 16k vs 32k generation cap comparison experiments.
+groups:
+  - slds
+  - swiltrabench
+  - lexam
+
+profiles:
+  cap16k:
+    slds:
+      generation_size: 16384
+    swiltrabench:
+      scope: scoped
+      generation_size: 16384
+    lexam:
+      open_question: true
+      mcq: true
+      generation_size: 16384
+      mcq_num_choices: [4, 8, 16]
+      mcq_with_idk: [true]
+  cap32k:
+    slds:
+      generation_size: 32768
+    swiltrabench:
+      scope: scoped
+      generation_size: 32768
+    lexam:
+      open_question: true
+      mcq: true
+      generation_size: 32768
+      mcq_num_choices: [4, 8, 16]
+      mcq_with_idk: [true]

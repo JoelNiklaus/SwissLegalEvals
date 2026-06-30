@@ -1,0 +1,19 @@
+# Judge models for LLM-as-judge metrics. Override path: SWISSLEGALEVALS_JUDGE_CONFIG
+judges:
+  slds:
+    provider: hf-inference-providers
+    model: deepseek-ai/DeepSeek-V4-Pro
+    hf_provider: novita
+    short_judge_name: slds_judge_deepseek_v4_pro
+  swiltrabench:
+    provider: openai
+    model: gpt-4o-mini
+    short_judge_name: slt_judge_gpt-4o-mini
+    system_style: codebook
+    few_shot_style: diverse
+    judgment_style: deduction
+  lexam_oq:
+    provider: hf-inference-providers
+    model: deepseek-ai/DeepSeek-R1-0528
+    hf_provider: novita
+    short_judge_name: lexam_oq_judge_deepseek_r1

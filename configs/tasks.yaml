@@ -1,0 +1,46 @@
+# Task groups (passed to run.py --groups):
+#   slds            — 9 headnote combos (slds:{de,fr,it}_{de,fr,it})
+#   swiltrabench    — SwiLTra translation tasks; granularity from profile
+#   swiltrabench_full — all SwiLTra levels (87k judged samples/model)
+#   lexam           — open_question + MCQ tasks
+#
+# Profiles set SwiLTra granularity via swiltrabench.scope:
+#   scoped: text_level, paragraph_level, press_release (48,196 samples)
+#   full: all SwiLTra levels
+#
+# Each task block may set generation_size (max new tokens for the evaluated model).
+# SwiLTra uses max(level default, generation_size) so short levels still respect the floor.
+
+groups:
+  - slds
+  - swiltrabench
+  - swiltrabench_full
+  - lexam
+
+profiles:
+  default:
+    slds:
+      generation_size: 32768
+    swiltrabench:
+      scope: scoped
+      generation_size: 32768
+    lexam:
+      open_question: true
+      mcq: true
+      generation_size: 32768
+      # Stop at 16 because 32 choices + IDK needs labels beyond A-Z; add a wide-label prompt/scorer before enabling 32.
+      mcq_num_choices: [4, 8, 16]
+      mcq_with_idk: [true]
+  swiltrabench_full:
+    slds:
+      generation_size: 32768
+    swiltrabench:
+      scope: full
+      generation_size: 32768
+    lexam:
+      open_question: true
+      mcq: true
+      generation_size: 32768
+      # Stop at 16 because 32 choices + IDK needs labels beyond A-Z; add a wide-label prompt/scorer before enabling 32.
+      mcq_num_choices: [4, 8, 16]
+      mcq_with_idk: [true]

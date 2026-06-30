@@ -1,0 +1,82 @@
+[project]
+name = "swiss-legal-evals"
+version = "0.1.0"
+description = "Evaluate LLMs on Swiss legal benchmarks (SLDS, SwiLTra-Bench, LEXam) via lighteval."
+readme = "README.md"
+requires-python = ">=3.13"
+license = { text = "MIT" }
+authors = [
+    { name = "Joel Niklaus" },
+]
+keywords = ["evaluation", "legal-nlp", "swiss-law", "lighteval", "llm"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
+dependencies = [
+    "lighteval[multilingual,litellm] @ git+https://github.com/huggingface/lighteval@4d470292936b9ec5523cb495b4165cc4f77bcc77",
+    "pandas>=2.2.0",
+    "plotly>=5.24.0",
+    "python-dotenv>=1.0.0",
+    "pyyaml>=6.0.2",
+    "tqdm>=4.66.0",
+]
+
+[project.optional-dependencies]
+local = [
+    "ray>=2.40.0",
+    "more-itertools>=10.5.0",
+]
+dev = [
+    "pytest>=8.3.0",
+    "ruff>=0.8.0",
+]
+
+[project.scripts]
+swiss-legal-evals = "swiss_legal_evals.run:main"
+evaluate = "swiss_legal_evals.run:main"
+swiss-legal-evals-aggregate = "swiss_legal_evals.aggregate:main"
+swiss-legal-evals-plot = "swiss_legal_evals.plot:main"
+
+[project.urls]
+Homepage = "https://github.com/JoelNiklaus/SwissLegalEvals"
+Repository = "https://github.com/JoelNiklaus/SwissLegalEvals"
+Issues = "https://github.com/JoelNiklaus/SwissLegalEvals/issues"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.metadata]
+allow-direct-references = true
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/swiss_legal_evals"]
+
+[tool.hatch.build.targets.sdist]
+include = [
+    "/configs",
+    "/results",
+    "/scripts",
+    "/src",
+    "/tests",
+    "/LICENSE",
+    "/README.md",
+    "/pyproject.toml",
+    "/uv.lock",
+]
+
+[tool.ruff]
+line-length = 119
+target-version = "py313"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "W", "UP", "B", "SIM", "ANN"]
+ignore = ["ANN401", "SIM401"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]

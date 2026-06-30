@@ -1,0 +1,15 @@
+# Tiny models for infrastructure smoke tests only. Not part of the benchmark model set.
+models:
+  - name: qwen2.5-0.5b-vllm
+    provider: vllm
+    model: Qwen/Qwen2.5-0.5B-Instruct
+    max_model_length: 32768
+    gpu_memory_utilization: 0.3
+    max_num_seqs: 1
+    max_num_batched_tokens: 8192
+    trust_remote_code: true
+
+  - name: gpt-oss-120b-hf
+    provider: hf-inference-providers
+    model: openai/gpt-oss-120b
+    hf_provider: together

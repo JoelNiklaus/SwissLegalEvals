@@ -1,0 +1,87 @@
+# Evaluation models. Optional `tasks` limits which groups from configs/tasks.yaml to run.
+models:
+  - name: deepseek-v4-pro
+    provider: hf-inference-providers
+    model: deepseek-ai/DeepSeek-V4-Pro
+    # together hung twice on full runs (503 + CLOSE-WAIT); deepinfra 9/9 in stress test + flash full run ok.
+    hf_provider: deepinfra
+
+  - name: deepseek-v4-flash
+    provider: hf-inference-providers
+    model: deepseek-ai/DeepSeek-V4-Flash
+    # novita and fireworks-ai both returned repeated HF-router 504 timeouts; trying deepinfra.
+    hf_provider: deepinfra
+
+  - name: kimi-k2.6
+    provider: hf-inference-providers
+    model: moonshotai/Kimi-K2.6
+    hf_provider: fireworks-ai
+
+  - name: glm-5.2
+    provider: hf-inference-providers
+    model: zai-org/GLM-5.2
+    # fireworks is the only viable provider: novita returns empty bodies, together doesn't host it.
+    hf_provider: fireworks-ai
+
+  - name: minimax-m3
+    provider: hf-inference-providers
+    model: MiniMaxAI/MiniMax-M3
+    hf_provider: fireworks-ai
+
+  # - name: qwen3.5-397b
+  #   provider: hf-inference-providers
+  #   model: Qwen/Qwen3.5-397B-A17B
+  #   hf_provider: together
+
+  - name: nemotron-3-ultra-550b-a55b-nvfp4
+    provider: hf-inference-providers
+    model: nvidia/NVIDIA-Nemotron-3-Ultra-550B-A55B-NVFP4
+    hf_provider: together
+
+  - name: gpt-oss-120b
+    provider: vllm
+    model: openai/gpt-oss-120b
+    # Ray data-parallel deadlocks on this cluster; use a single TP4 engine instead.
+    data_parallel_size: 1
+    tensor_parallel_size: 4
+    max_model_length: 65536
+
+  - name: gemma-4-31b-it
+    provider: vllm
+    model: google/gemma-4-31B-it
+    # DP2 deadlocked on the Ray shm-broadcast coordinator; a single TP4 engine is stable.
+    data_parallel_size: 1
+    tensor_parallel_size: 4
+    max_model_length: 65536
+    max_num_batched_tokens: 4096
+    language_model_only: true
+
+  - name: qwen3.5-35b-a3b
+    provider: vllm
+    model: Qwen/Qwen3.5-35B-A3B
+    # Ray data-parallel deadlocks on this cluster; use a single TP4 engine instead.
+    data_parallel_size: 1
+    tensor_parallel_size: 4
+    max_model_length: 65536
+
+  - name: olmo-3.1-32b-think
+    provider: vllm
+    model: allenai/Olmo-3.1-32B-Think
+    data_parallel_size: 1
+    tensor_parallel_size: 4
+    max_model_length: 65536
+
+  - name: lfm2.5-8b
+    provider: vllm
+    model: LiquidAI/LFM2.5-8B-A1B
+    data_parallel_size: 1
+    max_model_length: 65536
+
+  - name: hy-mt2-30b
+    provider: vllm
+    model: tencent/Hy-MT2-30B-A3B
+    # Ray data-parallel deadlocks on this cluster; use a single TP4 engine instead.
+    data_parallel_size: 1
+    tensor_parallel_size: 4
+    max_model_length: 65536
+    tasks: [swiltrabench]
