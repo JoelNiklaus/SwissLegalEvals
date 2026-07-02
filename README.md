@@ -154,7 +154,11 @@ The completed 2026 full-run outputs are mirrored in the public Hugging Face buck
 [`joelniklaus/SwissLegalEvals`](https://huggingface.co/buckets/joelniklaus/SwissLegalEvals):
 
 ```bash
+# Download the published results into ./results
 hf buckets sync hf://buckets/joelniklaus/SwissLegalEvals results
+
+# Maintainers: mirror local ./results back to the bucket
+hf buckets sync results hf://buckets/joelniklaus/SwissLegalEvals --delete
 ```
 
 Local result directories (`results/`, `results_smoke*`, `results_cap_compare_*`) are gitignored to keep the repository lightweight.
