@@ -1,6 +1,6 @@
-# The best open LLMs on Swiss legal tasks in 2026: a tight frontier, no clear winner
+# The state-of-the-art in open-source AI for Swiss legal tasks
 
-*Joel Niklaus · June 2026*
+*Joel Niklaus · July 6 2026*
 
 If you need an open-weight LLM for Swiss legal work in German, French, or Italian, there is no single best model in 2026. We evaluated 12 open models on three Swiss legal benchmarks, 55,861 scored samples each, and the top five finish within 2.1 points on our composite score.
 

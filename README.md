@@ -2,30 +2,15 @@
 
 Evaluate open-source LLMs on Swiss legal benchmarks (**SLDS**, **SwiLTra-Bench**, **LEXam**) using [lighteval](https://github.com/huggingface/lighteval) with paper-grounded LLM-as-judge metrics.
 
-## Design decisions
-
-1. **Judge-only generative metrics** — SLDS, SwiLTra-Bench, and LEXam open questions are scored only with LLM judges. Lexical and embedding metrics (BLEU, ROUGE, BERTScore, etc.) correlate poorly with human judgments in the underlying papers; MCQ tasks use accuracy only.
-2. **Paper-grounded judges** (defaults in `configs/judges.yaml`):
-   - **SLDS**: [Rolshoven et al., EMNLP Findings 2025](https://arxiv.org/abs/2410.13456) — `deepseek-ai/DeepSeek-V4-Pro` via HF inference providers (5-rubric prompt from lighteval).
-   - **SwiLTra-Bench**: [Niklaus et al., ACL 2025](https://arxiv.org/abs/2503.01372) — `gpt-4o-mini` via OpenAI with codebook + deduction + diverse few-shot.
-   - **LEXam OQ**: [Fan et al., ICLR 2026](https://arxiv.org/abs/2505.12864) — `deepseek-ai/DeepSeek-R1-0528` via HF inference providers.
-3. **lighteval from git `main`** — Swiss legal tasks are not in PyPI `lighteval` 0.13.0 yet.
-4. **Configurable providers** — Judges and eval models support `openai`, `openrouter`, `hf-inference-providers`, and local `vllm`.
-5. **Scoped SwiLTra-Bench** — Default profile runs lowest granularity only (`text_level`, `paragraph_level`, `press_release`); opt into all levels via profile `swiltrabench_full`.
-6. **LEXam MCQ IDK only up to 16 choices** — `mcq_32` with IDK would require labels beyond `A-Z`; add a wide-label prompt/scorer before enabling it.
-7. **Reasoning-model post-processing** — Judges and MCQ letter extraction strip chain-of-thought (harmony `assistantfinal`, `FR:` continuations, `###X###` / conclusion patterns). Translation tasks drop bare-`\n` stop sequences on paragraph/text levels; per-task generation caps live under each task block in `configs/tasks.yaml`.
-8. **HF inference-providers streaming** — API eval models stream chat completions (`stream=True`) so long generations keep the HF router connection alive and avoid 504 gateway timeouts.
-
 ## Install
 
-Default install for API-based evaluation, aggregation, plotting, and tests:
+Default install for API-based evaluation, aggregation, plotting, blog figures, and tests:
 
 ```bash
 git clone https://github.com/JoelNiklaus/SwissLegalEvals.git
 cd SwissLegalEvals
 uv venv --python 3.13
-GIT_LFS_SKIP_SMUDGE=1 uv sync   # skip LFS blobs in lighteval test fixtures
-uv sync --extra dev             # pytest, ruff
+GIT_LFS_SKIP_SMUDGE=1 uv sync --extra dev   # skip lighteval fixture blobs; install pytest, ruff, kaleido
 ```
 
 Optional local vLLM support on a normal machine:
@@ -43,7 +28,7 @@ mkdir -p scripts/logs/slurm
 sbatch scripts/setup_vllm.sh
 ```
 
-`scripts/setup_vllm.sh` is not the general installation path. It is a cluster-specific patch for our Hopper nodes: it loads glibc 2.38 + CUDA 12.9, installs the cu129 manylinux_2_34 vLLM wheel into `.venv`, applies `glibc-fix`, and installs a tiny `nvJitLink` preload hook so the cu129 wheel does not accidentally pick up older system CUDA libraries. Other users should first try the normal `uv pip install vllm` path and only adapt this script if their cluster has the same kind of CUDA/glibc wheel issue.
+`scripts/setup_vllm.sh` is not the general installation path. It is a cluster-specific patch for our Hopper nodes: it loads glibc 2.38 + CUDA 12.9, installs the cu129 manylinux_2_34 vLLM wheel into `.venv`, applies `glibc-fix`, and installs a tiny `nvJitLink` preload hook so the cu129 wheel does not accidentally pick up older system CUDA libraries. Other users should first try the normal `uv pip install vllm` path and only adapt this script if their cluster has the same CUDA/glibc wheel issue.
 
 ## Environment variables
 
@@ -66,19 +51,21 @@ OPENROUTER_API_KEY=...
 | `hf-inference-providers` | `HF_TOKEN`           |
 | `vllm`                   | (local GPU)          |
 
-Optional: set `HF_ORG_TO_BILL=<org-slug>` to bill HF Inference Providers usage to a Team/Enterprise organization instead of your personal account (the default). Applies to eval models and HF-backed judges (SLDS, LEXam OQ).
+Optional: set `HF_ORG_TO_BILL=<org-slug>` to bill HF Inference Providers usage to a Team/Enterprise organization instead of your personal account. Applies to eval models and HF-backed judges (SLDS, LEXam OQ).
 
-Override judge config: `SWISSLEGALEVALS_JUDGE_CONFIG=/path/to/judges.yaml`
+Useful overrides:
 
-Override tasks profile/config: `SWISSLEGALEVALS_TASKS_CONFIG=/path/to/tasks.yaml` and `SWISSLEGALEVALS_TASKS_PROFILE=default` (set automatically by `run.py`).
+| Variable                         | Purpose                                                  |
+|----------------------------------|----------------------------------------------------------|
+| `SWISSLEGALEVALS_JUDGE_CONFIG`   | Absolute path to an alternate `judges.yaml`.             |
+| `SWISSLEGALEVALS_TASKS_CONFIG`   | Task config path passed to lighteval subprocesses.       |
+| `SWISSLEGALEVALS_TASKS_PROFILE`  | Active task profile passed to lighteval subprocesses.    |
 
-Use `--env-file /path/to/.env` to load a different dotenv file.
-
-Default HF judges use `novita` because the currently configured DeepSeek judge IDs are not served by `together` on HF inference providers.
+Use `--env-file /path/to/.env` to load a different dotenv file. Default HF judges use `novita` because the currently configured DeepSeek judge IDs are not served by `together` on HF inference providers.
 
 ## Usage
 
-Dry-run all models (prints lighteval commands, no API keys required):
+Dry-run all configured models (prints lighteval commands, no API keys required):
 
 ```bash
 uv run swiss-legal-evals --dry-run
@@ -90,14 +77,11 @@ Run all models (`evaluate` is an alias for `swiss-legal-evals`):
 uv run evaluate
 ```
 
-Run one model by provider:
+Run one configured model by provider:
 
 ```bash
 # HF inference providers (large MoE models)
 uv run swiss-legal-evals --models deepseek-v4-pro
-
-# OpenRouter (MiMo, Mistral Large)
-uv run swiss-legal-evals --models mimo-v2.5-pro mistral-large-2512
 
 # Local vLLM (after setup_vllm.sh on a GPU node)
 uv run swiss-legal-evals --models gemma-4-31b-it qwen3.5-35b-a3b
@@ -106,7 +90,15 @@ uv run swiss-legal-evals --models gemma-4-31b-it qwen3.5-35b-a3b
 uv run swiss-legal-evals --models hy-mt2-30b
 ```
 
-Local `vllm` runs use `tensor_parallel_size` and `data_parallel_size` from `configs/models.yaml`. Current local models use TP4 with DP1 (4 H100s) after Ray data-parallel deadlocks on this cluster; `lfm2.5-8b` uses a single GPU. `scripts/launch_all.sh` requests `data_parallel_size * tensor_parallel_size` GPUs per vLLM job. HF Inference Provider models request **no GPUs** — only CPUs for orchestration and judging.
+OpenRouter is supported by the runner, but no OpenRouter models are part of the published 2026 run. Add one to `configs/models.yaml` before selecting it:
+
+```yaml
+- name: my-openrouter-model
+  provider: openrouter
+  model: provider/model-id
+```
+
+Local `vllm` runs use `tensor_parallel_size` and `data_parallel_size` from `configs/models.yaml`. Current local models use TP4 with DP1 (4 H100s) after Ray data-parallel deadlocks on this cluster; `lfm2.5-8b` uses a single GPU. `scripts/launch_all.sh` requests `data_parallel_size * tensor_parallel_size` GPUs per vLLM job. HF Inference Provider models request no GPUs, only CPUs for orchestration and judging.
 
 Full SwiLTra-Bench (all granularity levels):
 
@@ -122,15 +114,34 @@ Debug cap:
 uv run swiss-legal-evals --models gemma-4-31b-it --max-samples 5
 ```
 
-Single-task smoke test:
+Single-task smoke test with an API model:
 
 ```bash
 uv run swiss-legal-evals \
-  --models gpt-oss-120b \
+  --models deepseek-v4-flash \
   --task-string 'slds:de_de|0' \
   --max-samples 1 \
   --output-dir results_smoke/hf
 ```
+
+Use an alternate model config for infrastructure smoke tests:
+
+```bash
+uv run swiss-legal-evals \
+  --models-config configs/models_smoke.yaml \
+  --models qwen2.5-0.5b-vllm \
+  --max-samples 1 \
+  --output-dir results_smoke/vllm
+```
+
+Other useful flags:
+
+| Flag               | Purpose                                                               |
+|--------------------|-----------------------------------------------------------------------|
+| `--models-config`  | Use a different model list, such as `configs/models_smoke.yaml`.       |
+| `--tasks-config`   | Use a different task file, such as `configs/tasks_cap_compare.yaml`.   |
+| `--skip-env-check` | Skip API-key validation before launching jobs. Useful only for debug. |
+| `--verbose`        | Enable more detailed runner logs.                                     |
 
 ## Development checks
 
@@ -141,17 +152,28 @@ uv run ruff check src tests scripts/analyze_cap_compare.py
 uv run pytest tests -q
 ```
 
-Aggregate and plot:
+## Results, plots, and reports
+
+Run the evaluation, aggregate raw JSON, then render Plotly family charts:
 
 ```bash
+uv run swiss-legal-evals
 uv run swiss-legal-evals-aggregate
 uv run swiss-legal-evals-plot
 ```
 
-Outputs: `results/results/<model>/results_*.json`, `results/summary_long.csv`, `results/summary.csv`, `plots/<family>.html`.
+Output files:
 
-The completed 2026 full-run outputs are mirrored in the public Hugging Face bucket
-[`joelniklaus/SwissLegalEvals`](https://huggingface.co/buckets/joelniklaus/SwissLegalEvals):
+| Path                                      | Produced by                     | Purpose                                  |
+|-------------------------------------------|---------------------------------|------------------------------------------|
+| `results/results/<model>/results_*.json`  | `swiss-legal-evals` / lighteval | Raw model-level result JSON.             |
+| `results/details/**/details_*.parquet`    | `swiss-legal-evals` / lighteval | Per-sample generations and scores.       |
+| `results/summary_long.csv`                | `swiss-legal-evals-aggregate`   | Tidy task/metric table.                  |
+| `results/summary_family_mean.csv`         | `swiss-legal-evals-aggregate`   | Model/family/metric means, used by plot. |
+| `results/summary.csv`                     | `swiss-legal-evals-plot`        | Model x family primary-metric table.     |
+| `plots/<family>.html`                     | `swiss-legal-evals-plot`        | Interactive Plotly family charts.        |
+
+The completed 2026 full-run outputs are mirrored in the public Hugging Face bucket [`joelniklaus/SwissLegalEvals`](https://huggingface.co/buckets/joelniklaus/SwissLegalEvals):
 
 ```bash
 # Download the published results into ./results
@@ -165,13 +187,16 @@ Local result directories (`results/`, `results_smoke*`, `results_cap_compare_*`)
 
 ### Blog post
 
-[`blog/swiss-legal-evals-2026.md`](blog/swiss-legal-evals-2026.md) is a short write-up of the 2026 full run (state of the art of open models on Swiss legal tasks). Regenerate its bar charts from the published summary with:
+[`blog/swiss-legal-evals-2026.md`](blog/swiss-legal-evals-2026.md) is a short write-up of the 2026 full run (state of the art of open models on Swiss legal tasks). Regenerate its static PNG charts from the published summaries with:
 
 ```bash
-uv sync --extra dev   # figure export needs kaleido, in the dev group
+uv sync --extra dev
 hf buckets sync hf://buckets/joelniklaus/SwissLegalEvals/summary.csv results
+hf buckets sync hf://buckets/joelniklaus/SwissLegalEvals/summary_long.csv results
 uv run python blog/make_figures.py   # writes blog/figures/*.png
 ```
+
+`blog/make_figures.py` writes six static PNGs and uses cached Hugging Face org avatars from `blog/logos/`. The first run downloads missing logos; later runs use the checked-in cache.
 
 ### Task profiles and generation caps
 
@@ -195,19 +220,89 @@ All task families use the same 32k generation cap for simplicity. SwiLTra still 
 
 `run.py` passes the active profile to lighteval via `SWISSLEGALEVALS_TASKS_CONFIG` and `SWISSLEGALEVALS_TASKS_PROFILE`.
 
+Model entries can narrow the global groups with a `tasks:` field. The translation specialist `hy-mt2-30b` uses `tasks: [swiltrabench]`, so it never runs SLDS or LEXam.
+
+Temporary cap-comparison profiles live in `configs/tasks_cap_compare.yaml` (`cap16k`, `cap32k`). Count default-profile samples with:
+
+```bash
+uv run python scripts/count_task_samples.py
+```
+
+## Maintainer and cluster scripts
+
+The scripts in `scripts/` are mostly for the Hopper Slurm environment used for the published run. They are useful references, but they are not a portable cloud deployment layer.
+
+| Script                           | Purpose                                                 |
+|----------------------------------|---------------------------------------------------------|
+| `scripts/launch_all.sh`          | Submit one Slurm job per configured benchmark model.    |
+| `scripts/launch_model.sh`        | Submit a single model with the configured GPU count.    |
+| `scripts/launch_eval.sh`         | Slurm worker that loads modules and runs the evaluator. |
+| `scripts/setup_vllm.sh`          | Hopper-specific vLLM/CUDA/glibc setup patch.            |
+| `scripts/count_task_samples.py`  | Print per-task and per-group sample counts.             |
+| `scripts/run_cap_compare.sh`     | Run 16k vs 32k generation-cap experiments.              |
+| `scripts/analyze_cap_compare.py` | Summarize cap-comparison outputs.                       |
+
+## Implementation notes
+
+These choices explain the shape of the repo if you are getting oriented:
+
+1. **Generation is scored by paper-grounded judges.** SLDS, SwiLTra-Bench, and LEXam open questions use the judge prompts/models from their papers rather than BLEU, ROUGE, or embedding metrics. MCQ tasks use extractive scoring (`trad_score`, `idk_score`, `extract_fail`) instead of a judge.
+2. **Judge configuration is separate from model configuration.** `configs/judges.yaml` controls the scorer models and providers; `configs/models.yaml` controls the models being evaluated. Both can use API providers, while local evaluation models use `vllm`.
+3. **lighteval is pinned to a git revision.** `pyproject.toml` uses `huggingface/lighteval@4d470292936b9ec5523cb495b4165cc4f77bcc77` because these Swiss legal tasks were not in the PyPI release when this repo was built.
+4. **The default SwiLTra-Bench profile is scoped.** The normal run uses one granularity per translation dataset (`text_level`, `paragraph_level`, `press_release`) to keep the full benchmark feasible. Use `swiltrabench_full` for all levels.
+5. **LEXam MCQ with IDK stops at 16 choices.** `mcq_32` with IDK would need labels beyond `A-Z`, so it is disabled until the prompt/scorer supports wider labels.
+6. **Reasoning-model outputs are normalized before scoring.** `postprocess.py` strips common chain-of-thought wrappers and final-answer markers before judges or MCQ extraction see the text.
+7. **API generations stream.** HF inference-provider model calls stream chat completions so long generations keep the router connection alive instead of timing out.
+
 ## Layout
 
 ```
-configs/          models, judges, task profiles
+configs/
+  judges.yaml              judge providers and model IDs
+  models.yaml              published benchmark model list
+  models_smoke.yaml        tiny infra smoke models
+  tasks.yaml               default/full task groups and generation caps
+  tasks_cap_compare.yaml   16k vs 32k cap profiles
 src/swiss_legal_evals/
-  tasks.py        custom TASKS_TABLE (judge-only)
-  task_lists.py   build task strings from YAML
-  run.py          orchestrate lighteval
-  aggregate.py    JSON → pandas
-  plot.py         Plotly charts
-scripts/setup_vllm.sh
+  aggregate.py             lighteval JSON -> summary CSVs
+  cuda_preload.py          nvJitLink preload helper for Hopper vLLM setup
+  plot.py                  Plotly family charts
+  postprocess.py           reasoning-output cleanup and MCQ extraction helpers
+  providers.py             provider/API-key validation
+  run.py                   CLI entry point that builds and launches lighteval
+  task_lists.py            YAML profiles -> lighteval task strings
+  tasks.py                 custom Swiss legal TASKS_TABLE and judge metrics
+scripts/
+  launch_all.sh            Slurm submitter for the full model set
+  launch_model.sh          Slurm submitter for one model
+  launch_eval.sh           Slurm worker
+  setup_vllm.sh            Hopper vLLM setup patch
+  count_task_samples.py    sample-count utility
+  run_cap_compare.sh       generation-cap comparison runner
+  analyze_cap_compare.py   cap-comparison analysis
+blog/
+  swiss-legal-evals-2026.md
+  make_figures.py
+  figures/                 static PNGs used by the post
+  logos/                   cached Hugging Face org avatars
+tests/                     pytest coverage for runner, configs, tasks, aggregation, postprocessing
+.github/workflows/ci.yml   ruff + pytest CI
+```
+
+## Citation
+
+If you use SwissLegalEvals, cite the repository:
+
+```bibtex
+@misc{niklaus2026swisslegalevals,
+  author       = {Joel Niklaus},
+  title        = {The state-of-the-art in open-source AI for Swiss legal tasks},
+  year         = {2026},
+  howpublished = {\url{https://github.com/JoelNiklaus/SwissLegalEvals}},
+  note         = {SLDS, SwiLTra-Bench, and LEXam evaluations with lighteval}
+}
 ```
 
 ## License
 
-MIT — see [LICENSE](LICENSE).
+MIT - see [LICENSE](LICENSE).
