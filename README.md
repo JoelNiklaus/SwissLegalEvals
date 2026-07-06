@@ -163,6 +163,16 @@ hf buckets sync results hf://buckets/joelniklaus/SwissLegalEvals --delete
 
 Local result directories (`results/`, `results_smoke*`, `results_cap_compare_*`) are gitignored to keep the repository lightweight.
 
+### Blog post
+
+[`blog/swiss-legal-evals-2026.md`](blog/swiss-legal-evals-2026.md) is a short write-up of the 2026 full run (state of the art of open models on Swiss legal tasks). Regenerate its bar charts from the published summary with:
+
+```bash
+uv sync --extra dev   # figure export needs kaleido, in the dev group
+hf buckets sync hf://buckets/joelniklaus/SwissLegalEvals/summary.csv results
+uv run python blog/make_figures.py   # writes blog/figures/*.png
+```
+
 ### Task profiles and generation caps
 
 `configs/tasks.yaml` selects which benchmark families to run and sets `generation_size` (max new tokens) under each task block. Example:
