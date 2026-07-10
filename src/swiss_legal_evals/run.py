@@ -25,6 +25,7 @@ PROJECT_ROOT = Path.cwd()
 PACKAGE_ROOT = Path(__file__).resolve().parent
 DEFAULT_MODELS_CONFIG = PROJECT_ROOT / "configs" / "models.yaml"
 DEFAULT_TASKS_CONFIG = PROJECT_ROOT / "configs" / "tasks.yaml"
+DEFAULT_JUDGE_CONFIG = PROJECT_ROOT / "configs" / "judges.yaml"
 DEFAULT_ENV_FILE = PROJECT_ROOT / ".env"
 CUSTOM_TASKS_PATH = PACKAGE_ROOT / "tasks.py"
 OUTPUT_DIR = PROJECT_ROOT / "results"
@@ -142,11 +143,12 @@ def build_lighteval_command(
     raise ValueError(f"Unknown provider: {provider}")
 
 
-def _subprocess_env(tasks_config: Path, profile: str) -> dict[str, str]:
+def _subprocess_env(tasks_config: Path, profile: str, judge_config: Path = DEFAULT_JUDGE_CONFIG) -> dict[str, str]:
     """Build an environment that exposes uv Python runtime libs to vLLM workers."""
     env = dict(os.environ)
     env["SWISSLEGALEVALS_TASKS_CONFIG"] = str(tasks_config.resolve())
     env["SWISSLEGALEVALS_TASKS_PROFILE"] = profile
+    env["SWISSLEGALEVALS_JUDGE_CONFIG"] = str(judge_config.resolve())
     python_lib_dir = Path(sys.base_prefix) / "lib"
     if (python_lib_dir / f"libpython{sys.version_info.major}.{sys.version_info.minor}.so.1.0").exists():
         if "LD_LIBRARY_PATH" in env and env["LD_LIBRARY_PATH"]:

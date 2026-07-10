@@ -40,6 +40,7 @@ API_MODELS=(
   kimi-k2.6
   glm-5.2
   minimax-m3
+  llama-3.3-70b-instruct
   # qwen3.5-397b
   nemotron-3-ultra-550b-a55b-nvfp4
 )

@@ -225,3 +225,4 @@ results_smoke20/
 plots/
 scripts/logs/
 ray_tmp/
+.litellm_cache/

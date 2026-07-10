@@ -51,8 +51,12 @@ module use /admin/opt/modulefiles
 # glibc/2.38 is needed for the patched venv python; cuda/12.9 for the vLLM wheels.
 module load glibc/2.38 cuda/12.9
 
-SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
-PROJECT_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
+if [[ -n "${SLURM_SUBMIT_DIR:-}" ]]; then
+  PROJECT_ROOT="${SLURM_SUBMIT_DIR}"
+else
+  SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+  PROJECT_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
+fi
 cd "${PROJECT_ROOT}"
 
 # Expose the uv-managed python runtime libs to vLLM/Ray workers.

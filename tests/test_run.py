@@ -18,10 +18,13 @@ from swiss_legal_evals.run import (
 
 def test_subprocess_env_exports_tasks_profile(tmp_path: Path) -> None:
     tasks_config = tmp_path / "tasks.yaml"
+    judge_config = tmp_path / "judges.yaml"
     tasks_config.write_text("profiles: {}\n")
-    env = _subprocess_env(tasks_config, "default")
+    judge_config.write_text("judges: {}\n")
+    env = _subprocess_env(tasks_config, "default", judge_config)
     assert env["SWISSLEGALEVALS_TASKS_CONFIG"] == str(tasks_config.resolve())
     assert env["SWISSLEGALEVALS_TASKS_PROFILE"] == "default"
+    assert env["SWISSLEGALEVALS_JUDGE_CONFIG"] == str(judge_config.resolve())
 
 
 def test_litellm_command() -> None:

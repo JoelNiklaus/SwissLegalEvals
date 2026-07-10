@@ -28,6 +28,12 @@ models:
     model: MiniMaxAI/MiniMax-M3
     hf_provider: fireworks-ai
 
+  - name: llama-3.3-70b-instruct
+    provider: hf-inference-providers
+    model: meta-llama/Llama-3.3-70B-Instruct
+    # Both together and novita serve this model; novita was slightly faster in a 12-request stress probe.
+    hf_provider: novita
+
   # - name: qwen3.5-397b
   #   provider: hf-inference-providers
   #   model: Qwen/Qwen3.5-397B-A17B

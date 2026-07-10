@@ -7,6 +7,7 @@ import os
 import re
 import statistics
 from pathlib import Path
+from types import SimpleNamespace
 from typing import Any, Literal
 
 import numpy as np
@@ -91,7 +92,6 @@ def _hf_choice_text(content: str | None, reasoning: str | None) -> str:
 
 
 INFERENCE_PROVIDERS_API_MAX_RETRY = 12
-INFERENCE_PROVIDERS_FAILED_SAMPLE_RETRIES = 10
 
 
 def _apply_chat_completion_stream_chunk(
@@ -292,6 +292,7 @@ def _patch_inference_providers_reasoning_field() -> None:
         prompts: list[list[dict[str, str]]],
         num_samples: int | list[int],
         generation_sizes: list[int | None] | None = None,
+        docs: list[Doc] | None = None,
     ) -> list[Any]:
         semaphore = asyncio.Semaphore(self.parallel_calls_count)
         num_sampless = [num_samples for _ in prompts] if not isinstance(num_samples, list) else num_samples
@@ -313,6 +314,21 @@ def _patch_inference_providers_reasoning_field() -> None:
             async with semaphore:
                 return await __call_api_streaming(self, prompt, sample_count, generation_size)
 
+        def empty_response(sample_count: int) -> Any:
+            """Return an OpenAI-compatible empty completion for irrecoverable provider failures."""
+            return SimpleNamespace(
+                choices=[
+                    SimpleNamespace(message=SimpleNamespace(content="", reasoning=None))
+                    for _ in range(sample_count)
+                ]
+            )
+
+        def doc_label(idx: int) -> str:
+            if docs is None or idx >= len(docs):
+                return "doc=<unknown>"
+            doc = docs[idx]
+            return f"task={doc.task_name} doc_id={doc.id}"
+
         results: list[Any] = list(
             await async_tqdm.gather(
                 *[
@@ -330,30 +346,14 @@ def _patch_inference_providers_reasoning_field() -> None:
         for idx, result in enumerate(results):
             if result is not None:
                 continue
-            prompt = prompts[idx]
             sample_count = num_sampless[idx]
-            generation_size = generation_sizess[idx]
-            for attempt in range(INFERENCE_PROVIDERS_FAILED_SAMPLE_RETRIES):
-                wait_time = min(64, self.API_RETRY_SLEEP * (2**attempt))
-                logger.warning(
-                    "Retrying failed inference-providers request %d/%d after %ds (attempt %d/%d)",
-                    idx + 1,
-                    len(prompts),
-                    wait_time,
-                    attempt + 1,
-                    INFERENCE_PROVIDERS_FAILED_SAMPLE_RETRIES,
-                )
-                await asyncio.sleep(wait_time)
-                retry = await __call_api_streaming(self, prompt, sample_count, generation_size)
-                if retry is not None:
-                    results[idx] = retry
-                    break
-
-        if None in results:
-            failed_count = sum(result is None for result in results)
-            raise ValueError(
-                f"{failed_count}/{len(results)} inference-providers requests failed after extended retries"
+            logger.error(
+                "Accepting empty generation after exhausted streaming retries for request %d/%d (%s).",
+                idx + 1,
+                len(prompts),
+                doc_label(idx),
             )
+            results[idx] = empty_response(sample_count)
 
         for response in results:
             for choice in response.choices:
@@ -388,6 +388,7 @@ def _patch_inference_providers_reasoning_field() -> None:
                     contexts,
                     num_samples,
                     generation_sizes,
+                    split,
                 )
             )
             for response, context in zip(responses, contexts, strict=True):
