@@ -253,6 +253,8 @@ These choices explain the shape of the repo if you are getting oriented:
 5. **LEXam MCQ with IDK stops at 16 choices.** `mcq_32` with IDK would need labels beyond `A-Z`, so it is disabled until the prompt/scorer supports wider labels.
 6. **Reasoning-model outputs are normalized before scoring.** `postprocess.py` strips common chain-of-thought wrappers and final-answer markers before judges or MCQ extraction see the text.
 7. **API generations stream.** HF inference-provider model calls stream chat completions so long generations keep the router connection alive instead of timing out.
+8. **Transient provider failures are isolated per sample.** Model and judge calls retry independently; exhausted calls are logged as missing judgments or generations so one provider outage does not discard an entire batch.
+9. **Existing sample caches are reused across restarts.** If lighteval assigns an equivalent task a different in-process hash, the fullest previously loaded cache is selected and only missing samples are regenerated.
 
 ## Layout
 

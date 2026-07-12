@@ -2,12 +2,17 @@
 
 from __future__ import annotations
 
+import asyncio
+
 import pytest
 from huggingface_hub.inference._generated.types.chat_completion import (
     ChatCompletionStreamOutput,
     ChatCompletionStreamOutputChoice,
     ChatCompletionStreamOutputDelta,
 )
+from lighteval.metrics.utils.llm_as_judge import JudgeLM
+from lighteval.tasks.requests import SamplingMethod
+from lighteval.utils.cache_management import TaskID
 
 from swiss_legal_evals.tasks import (
     _TRANSLATION_STOP_SEQUENCE_OVERRIDES,
@@ -16,7 +21,9 @@ from swiss_legal_evals.tasks import (
     RobustJudgeSwissLandmarkDecisionSummarization,
     _apply_chat_completion_stream_chunk,
     _build_chat_completion_output_from_stream,
+    _cache_task_name,
     _hf_choice_text,
+    _select_existing_cache_hash,
 )
 
 
@@ -31,6 +38,25 @@ def test_hf_choice_text_keeps_reasoning_when_content_is_fragment() -> None:
 
 def test_hf_choice_text_falls_back_to_reasoning() -> None:
     assert _hf_choice_text(None, "thought") == "thought"
+
+
+def test_judge_inference_failure_becomes_empty_judgment() -> None:
+    judge = object.__new__(JudgeLM)
+    judge.API_MAX_RETRY = 0
+    judge.model = "test/judge"
+    judge.hf_provider = "novita"
+
+    call = judge._JudgeLM__call_hf_inference
+
+    assert asyncio.run(call([])) == ""
+
+
+def test_existing_cache_hash_is_reused_for_equivalent_task() -> None:
+    task_id = TaskID("lexam_oq:en|0", "legacy-hash", SamplingMethod.GENERATIVE)
+    existing_indices = {task_id: list(range(10))}
+
+    assert _cache_task_name("suite|lexam_oq:en|0") == "lexam_oq:en|0"
+    assert _select_existing_cache_hash(existing_indices, "lexam_oq:en|0", "new-hash") == "legacy-hash"
 
 
 def test_stream_chunk_accumulator_merges_content_and_reasoning() -> None:

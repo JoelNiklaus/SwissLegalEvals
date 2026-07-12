@@ -6,6 +6,7 @@ import logging
 import os
 import re
 import statistics
+from collections.abc import Mapping
 from pathlib import Path
 from types import SimpleNamespace
 from typing import Any, Literal
@@ -92,6 +93,33 @@ def _hf_choice_text(content: str | None, reasoning: str | None) -> str:
 
 
 INFERENCE_PROVIDERS_API_MAX_RETRY = 12
+
+
+JUDGE_API_MAX_RETRY = 12
+
+
+def _cache_task_name(full_task_name: str) -> str:
+    """Return the full task identifier used by lighteval cache directories."""
+    parts = full_task_name.split("|")
+    if len(parts) == 3:
+        return f"{parts[1]}|{parts[2]}"
+    return full_task_name
+
+
+def _select_existing_cache_hash(
+    existing_indices: Mapping[Any, list[int]],
+    task_name: str,
+    current_hash: str,
+) -> str:
+    """Select a previously loaded cache hash when the current hash is absent."""
+    candidates = [
+        (task_id.task_hash, len(sample_ids))
+        for task_id, sample_ids in existing_indices.items()
+        if task_id.task_name == task_name
+    ]
+    if not candidates or any(task_hash == current_hash for task_hash, _ in candidates):
+        return current_hash
+    return max(candidates, key=lambda candidate: (candidate[1], candidate[0]))[0]
 
 
 def _apply_chat_completion_stream_chunk(
@@ -436,8 +464,97 @@ def _patch_judge_hf_org_billing() -> None:
     JudgeLM._swisslegal_hf_org_billing_patch = True  # type: ignore[attr-defined]
 
 
+def _patch_judge_inference_provider_retries() -> None:
+    """Keep one failed HF judge request from aborting the whole evaluation.
+
+    The installed lighteval implementation raises after its retry budget is
+    exhausted. Since judge metrics are batched, that exception discards all
+    already-computed scores. Returning an empty judgment lets the metric parser
+    record a zero/missing score for only that sample and continue.
+    """
+    from lighteval.metrics.utils.llm_as_judge import JudgeLM
+
+    if getattr(JudgeLM, "_swisslegal_judge_retry_patch", False):
+        return
+
+    original_call = JudgeLM._JudgeLM__call_hf_inference
+
+    async def __call_hf_inference_with_fallback(
+        self: Any,
+        prompt: list[dict[str, str]],
+    ) -> str:
+        try:
+            response = await original_call(self, prompt)
+        except Exception as exc:
+            logger.error(
+                "Judge inference failed after %d retries for model=%s provider=%s; "
+                "recording a missing judgment: %s",
+                self.API_MAX_RETRY,
+                self.model,
+                self.hf_provider,
+                exc,
+            )
+            return ""
+        if response is None:
+            logger.error(
+                "Judge inference returned no response for model=%s provider=%s; "
+                "recording a missing judgment.",
+                self.model,
+                self.hf_provider,
+            )
+            return ""
+        return response
+
+    JudgeLM._JudgeLM__call_hf_inference = (  # type: ignore[attr-defined]
+        __call_hf_inference_with_fallback
+    )
+    JudgeLM._swisslegal_judge_retry_patch = True  # type: ignore[attr-defined]
+
+
+def _patch_lighteval_cache_hash_reuse() -> None:
+    """Reuse loaded sample caches when lighteval task hashes change between runs.
+
+    lighteval includes object representations from custom metrics in its task
+    hash, so equivalent task definitions can receive different hashes in new
+    Python processes. Existing cache files are already validated while loading;
+    reuse the fullest prior hash and let lighteval generate only missing sample
+    IDs.
+    """
+    from lighteval.utils.cache_management import SampleCache
+
+    if getattr(SampleCache, "_swisslegal_cache_hash_patch", False):
+        return
+
+    original_get_task_hash = SampleCache._get_task_hash
+
+    def _get_task_hash_with_reuse(self: Any, full_task_name: str) -> str:
+        current_hash = original_get_task_hash(self, full_task_name)
+        task_name = _cache_task_name(full_task_name)
+        reusable_hash = _select_existing_cache_hash(
+            self.existing_indices,
+            task_name,
+            current_hash,
+        )
+        logged_tasks = getattr(self, "_swisslegal_cache_reuse_logged", set())
+        if reusable_hash != current_hash and task_name not in logged_tasks:
+            logger.info(
+                "[CACHING] Reusing existing hash %s for task %s instead of current hash %s.",
+                reusable_hash,
+                task_name,
+                current_hash,
+            )
+            logged_tasks.add(task_name)
+            self._swisslegal_cache_reuse_logged = logged_tasks
+        return reusable_hash
+
+    SampleCache._get_task_hash = _get_task_hash_with_reuse  # type: ignore[method-assign]
+    SampleCache._swisslegal_cache_hash_patch = True  # type: ignore[attr-defined]
+
+
 _patch_inference_providers_reasoning_field()
 _patch_judge_hf_org_billing()
+_patch_judge_inference_provider_retries()
+_patch_lighteval_cache_hash_reuse()
 
 JudgeProvider = Literal["openai", "openrouter", "hf-inference-providers"]
 JudgeBackend = Literal["litellm", "inference-providers"]
@@ -767,6 +884,7 @@ def _swiltra_judge_metric(judge_cfg: dict[str, Any]) -> SampleLevelMetricGroupin
             judge_cfg["hf_provider"] if "hf_provider" in judge_cfg else None,
         ),
     )
+    judge.judge.API_MAX_RETRY = JUDGE_API_MAX_RETRY
     return SampleLevelMetricGrouping(
         metric_name=[short_name],
         higher_is_better={short_name: True},
@@ -801,6 +919,7 @@ def _lexam_oq_judge_metric(judge_cfg: dict[str, Any]) -> SampleLevelMetricGroupi
             max_tokens=LEXAM_OQ_JUDGE_MAX_TOKENS,
         ),
     )
+    judge.judge.API_MAX_RETRY = JUDGE_API_MAX_RETRY
     return SampleLevelMetricGrouping(
         metric_name=[short_name],
         higher_is_better={short_name: True},
