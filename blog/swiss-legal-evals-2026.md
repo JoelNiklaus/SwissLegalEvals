@@ -1,20 +1,20 @@
 # The state-of-the-art in open-source AI for Swiss legal tasks
 
-*Joel Niklaus · July 6 2026*
+*Joel Niklaus · July 12 2026*
 
-If you need an open-weight LLM for Swiss legal work in German, French, or Italian, there is no single best model in 2026. We evaluated 12 open models on three Swiss legal benchmarks, 55,861 scored samples each, and the top five finish within 2.1 points on our composite score.
+If you need an open-weight LLM for Swiss legal work in German, French, or Italian, there is no single best model in 2026. We evaluated 13 open models on three Swiss legal benchmarks, 55,861 scored samples each, and the top five finish within 2.1 points on our composite score.
 
 The model that wins overall is not the best translator. And the best translator is one of the weakest at multiple-choice law questions. So the right question is not "which open model is best" but "best at what."
 
 This post is for anyone deciding which open model to run on Swiss legal text, and for anyone who wants the current numbers instead of vibes. All results come from a single full run: the raw outputs live in the public [Hugging Face bucket](https://huggingface.co/buckets/joelniklaus/SwissLegalEvals), and the [`run.py` entry point](https://github.com/JoelNiklaus/SwissLegalEvals/blob/main/src/swiss_legal_evals/run.py) reproduces every number below.
 
-![Overall composite score across SLDS, SwiLTra-Bench, and LEXam for 11 comparable open models](figures/overall_ranking.png)
+![Overall composite score across SLDS, SwiLTra-Bench, and LEXam for 12 comparable open models](figures/overall_ranking.png)
 
 NVIDIA's Nemotron 3 Ultra 550B leads the composite at 59.0. But Kimi K2.6 (58.6), DeepSeek V4 Pro (58.3), DeepSeek V4 Flash (57.3), and MiniMax M3 (56.9) trail by only 0.4, 0.7, 1.7, and 2.1 points.
 
 Treat the top of this chart as a five-way tie, not a clean ranking. A task-level bootstrap over the same result files (10,000 resamples within each benchmark family) gives 95% intervals with half-widths of roughly 3.2 to 3.6 points for the top five models, larger than the 2.1-point spread between first and fifth. That uncertainty is also consistent with recent LLM-as-judge work: [JudgeSense](https://arxiv.org/abs/2604.23478) finds that equivalent prompt rephrasings can flip judge decisions, and [Li et al.](https://arxiv.org/abs/2506.22316) show that score-based judges shift under rubric and reference-answer perturbations. The composite averages four task groups (SLDS summarization, LEXam open questions, translation, and MCQ), each on a 0-100 scale.
 
-The gap only becomes decisive further down, with one exception. Gemma 4 31B reaches 54.8 overall, seventh place and within 0.7 of GLM 5.2 (55.5), which is striking for a 31B model sitting among the 500B-class frontier. Size alone does not explain the rest. Qwen3.5 35B (42.8) is a mixture-of-experts that activates only 3B parameters per token. OLMo 3.1 32B Think is dense and the same size as Gemma, yet scores 26.0, under half as well. And LFM2.5 8B (24.8), the only genuinely small model here, sits at the bottom. None of the three are ready for Swiss legal work yet.
+The gap only becomes decisive further down, with one exception. Gemma 4 31B reaches 54.8 overall, seventh place and within 0.7 of GLM 5.2 (55.5), which is striking for a 31B model sitting among the 500B-class frontier. Size alone does not explain the rest. Llama 3.3 70B (33.0) lands below Qwen3.5 35B (42.8), a mixture-of-experts that activates only 3B parameters per token. OLMo 3.1 32B Think is dense and the same size as Gemma, yet scores 26.0, under half as well. And LFM2.5 8B (24.8), the only genuinely small model here, sits at the bottom. None of these four are ready for Swiss legal work yet.
 
 ## What we measure: three Swiss legal benchmarks in three languages
 
@@ -40,10 +40,10 @@ If your workload is translation, run GLM 5.2. If it is summarization or open-end
 
 ## A 3B-active specialist nearly matches the frontier in translation
 
-The  models perform best in translation: nine of twelve score at least 57 out of 100. GLM 5.2 tops it at 66.2, ahead of Kimi K2.6 (65.3) and DeepSeek V4 Pro (64.2).
+The models perform best in translation: ten of thirteen score at least 57 out of 100. GLM 5.2 tops it at 66.2, ahead of Kimi K2.6 (65.3) and DeepSeek V4 Pro (64.2).
 
 
-![SwiLTra-Bench translation average for all 12 models](figures/translation.png)
+![SwiLTra-Bench translation average for all 13 models](figures/translation.png)
 
 
 The efficiency surprise is Hunyuan MT2 30B, a translation specialist with only 3B active parameters (we ran it on SwiLTra-Bench only). It lands sixth at 61.9, within 4.3 points of the best open translator, GLM 5.2 (66.2). The five models ahead of it activate far more per token, from MiniMax M3's 23B up to Nemotron 3 Ultra's 55B, so a model with 8x to 18x fewer active parameters is nearly matching the frontier on translation. The takeaway cuts two ways: a specialist does not win on raw quality, but no model on the board delivers more per active parameter. If you are compute-bound, Hunyuan MT2 is the translation model to watch. If you only want the best output, the big MoEs still win.
@@ -52,7 +52,7 @@ The efficiency surprise is Hunyuan MT2 30B, a translation specialist with only 3
 
 SwiLTra-Bench splits into three document types, and they are not equally hard.
 
-![Translation judge scores on the three SwiLTra-Bench subsets for all 12 models](figures/translation_subsets.png)
+![Translation judge scores on the three SwiLTra-Bench subsets for all 13 models](figures/translation_subsets.png)
 
 For the strong models the order is consistent: court-decision summaries are easiest, statutory law sits in the middle, and press releases are hardest. GLM 5.2 scores 71.0 on decision summaries but 60.5 on press releases, and every model in the top eight ranks the subsets in that same order. DeepSeek V4 Pro is the one that pulls ahead on press releases (61.2, the only score above 61 on that subset).
 
@@ -74,9 +74,9 @@ The `trad_score` in the chart treats "I don't know" as wrong. The benchmark also
 
 Averaging every German, French, and Italian task a model produces (SLDS plus the three translation subsets, the benchmarks that cover all three languages) exposes a small but consistent gap.
 
-![Mean judge score by Swiss language across SLDS and translation for the 11 comparable models](figures/language_comparison.png)
+![Mean judge score by Swiss language across SLDS and translation for the 12 comparable models](figures/language_comparison.png)
 
-French comes out highest on average (51.7 across the 11 comparable models), German is close behind (50.7), and Italian is last (48.4). The gap is only about three points, but it holds up: Italian is the lowest of the three for 8 of the 11 models, and German and French are within a point of each other. The likely cause is data volume, since Italian is the smallest of the three languages in Swiss legal corpora and on the open web. LEXam is left out of this cut because it exists only in German and English, and including it would compare the languages on an unequal benchmark mix.
+French comes out highest on average (50.7 across the 12 comparable models), German is close behind (49.9), and Italian is last (47.6). The gap is a little over three points, and Italian is the lowest of the three for 9 of the 12 models. German and French remain within a point of each other. The likely cause is data volume, since Italian is the smallest of the three languages in Swiss legal corpora and on the open web. LEXam is left out of this cut because it exists only in German and English, and including it would compare the languages on an unequal benchmark mix.
 
 ## Model sizes and the hardware to run them
 
@@ -87,6 +87,7 @@ Two numbers decide the cost of serving a model. Total parameters set how much me
 | DeepSeek V4 Pro       |  1.6T |    49B | FP4+FP8   | ~0.85 TB | 8x H200       |
 | Kimi K2.6             |    1T |    32B | INT4      |  ~0.5 TB | 4x H200       |
 | GLM 5.2               |  753B |    40B | BF16      |  ~1.5 TB | 11x H200      |
+| Llama 3.3 70B         |   70B |    70B | BF16      | ~140 GB  | 2x H100       |
 | Nemotron 3 Ultra 550B |  550B |    55B | NVFP4     |  ~275 GB | 4x H100       |
 | MiniMax M3            |  428B |    23B | BF16      | ~0.85 TB | 7x H200       |
 | DeepSeek V4 Flash     |  284B |    13B | FP4+FP8   |  ~150 GB | 2x H100       |
@@ -99,7 +100,7 @@ Two numbers decide the cost of serving a model. Total parameters set how much me
 
 Weights are total parameters times bytes per parameter (BF16 = 2, FP8 = 1, INT4/FP4 = 0.5), before the KV cache that long context adds; GPU counts assume 80 GB (H100) or 141 GB (H200) cards. We ran the local vLLM models on 4 H100s each for 64k-context throughput, well above these weight-only minimums.
 
-Precision shifts the picture as much as size. Kimi K2.6 has more total parameters than GLM 5.2 (1T versus 753B), but it ships as INT4, so its weights (~0.5 TB) are a third of GLM's BF16 footprint (~1.5 TB). Six of the twelve models need a multi-GPU server; the other six fit on one accelerator, and five of those run on a single 80 GB H100. That is the case for Gemma 4 31B: near-frontier quality (54.8 overall) from one GPU, while every model ranked above it needs several.
+Precision shifts the picture as much as size. Kimi K2.6 has more total parameters than GLM 5.2 (1T versus 753B), but it ships as INT4, so its weights (~0.5 TB) are a third of GLM's BF16 footprint (~1.5 TB). Seven of the thirteen models need a multi-GPU server; the other six fit on one accelerator, and five of those run on a single 80 GB H100. That is the case for Gemma 4 31B: near-frontier quality (54.8 overall) from one GPU, while every model ranked above it needs several.
 
 ## Known limitations
 
@@ -107,7 +108,7 @@ Treat the composite as indicative rather than a normalized benchmark: it mixes 0
 
 ## Conclusion
 
-The open frontier on Swiss legal tasks is close and specialized. Five models finish within 2.1 composite points, no single one wins every group, and the right pick depends on the job: GLM 5.2 for translation, Nemotron 3 Ultra or a DeepSeek V4 variant for summarization and open-ended reasoning, and Gemma 4 31B when you need near-frontier quality on a single GPU. Absolute quality is not there yet. The strongest models score in the mid-60s on open legal exam questions and fall into the 40s on 16-option multiple choice, so a lawyer still has to check the output on real matters.
+The open frontier on Swiss legal tasks is close and specialized. Five models finish within 2.1 composite points, no single one wins every group, and the right pick depends on the job: GLM 5.2 for translation, Nemotron 3 Ultra or a DeepSeek V4 variant for summarization and open-ended reasoning, and Gemma 4 31B when you need near-frontier quality on a single GPU. Llama 3.3 70B reinforces the specialization point: it is eighth in translation but tenth overall because its SLDS and MCQ scores collapse. Absolute quality is not there yet. The strongest models score in the mid-60s on open legal exam questions and fall into the 40s on 16-option multiple choice, so a lawyer still has to check the output on real matters.
 
 ## Reproduce this
 
