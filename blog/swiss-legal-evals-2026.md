@@ -6,13 +6,15 @@ If you need an open-weight LLM for Swiss legal work in German, French, or Italia
 
 The model that wins overall is not the best translator. And the best translator is one of the weakest at multiple-choice law questions. So the right question is not "which open model is best" but "best at what."
 
+**TL;DR:** Choose GLM 5.2 for translation, Nemotron or a DeepSeek V4 variant for summarization and open-ended legal reasoning, and Gemma 4 31B for local deployment. Gemma scores 54.8 overall and leads the MCQ benchmark; it fits on local hardware while every model above it is a much larger MoE served in the cloud.
+
 This post is for anyone deciding which open model to run on Swiss legal text, and for anyone who wants the current numbers instead of vibes. All results come from a single full run: the raw outputs live in the public [Hugging Face bucket](https://huggingface.co/buckets/joelniklaus/SwissLegalEvals), and the [`run.py` entry point](https://github.com/JoelNiklaus/SwissLegalEvals/blob/main/src/swiss_legal_evals/run.py) reproduces every number below.
 
 ![Overall composite score across SLDS, SwiLTra-Bench, and LEXam for 12 comparable open models](figures/overall_ranking.png)
 
 NVIDIA's Nemotron 3 Ultra 550B leads the composite at 59.0. But Kimi K2.6 (58.6), DeepSeek V4 Pro (58.3), DeepSeek V4 Flash (57.3), and MiniMax M3 (56.9) trail by only 0.4, 0.7, 1.7, and 2.1 points.
 
-Treat the top of this chart as a five-way tie, not a clean ranking. A task-level bootstrap over the same result files (10,000 resamples within each benchmark family) gives 95% intervals with half-widths of roughly 3.2 to 3.6 points for the top five models, larger than the 2.1-point spread between first and fifth. That uncertainty is also consistent with recent LLM-as-judge work: [JudgeSense](https://arxiv.org/abs/2604.23478) finds that equivalent prompt rephrasings can flip judge decisions, and [Li et al.](https://arxiv.org/abs/2506.22316) show that score-based judges shift under rubric and reference-answer perturbations. The composite averages four task groups (SLDS summarization, LEXam open questions, translation, and MCQ), each on a 0-100 scale.
+The top five are effectively tied. A task-level bootstrap over the same result files (10,000 resamples within each benchmark family) gives 95% intervals with half-widths of roughly 3.2 to 3.6 points, wider than the 2.1-point gap between first and fifth. That uncertainty is also consistent with recent LLM-as-judge work: [JudgeSense](https://arxiv.org/abs/2604.23478) finds that equivalent prompt rephrasings can flip judge decisions, and [Li et al.](https://arxiv.org/abs/2506.22316) show that score-based judges shift under rubric and reference-answer perturbations. The composite averages four task groups (SLDS summarization, LEXam open questions, translation, and MCQ), each on a 0-100 scale.
 
 The gap only becomes decisive further down, with one exception. Gemma 4 31B reaches 54.8 overall, seventh place and within 0.7 of GLM 5.2 (55.5), which is striking for a 31B model sitting among the 500B-class frontier. Size alone does not explain the rest. Llama 3.3 70B (33.0) lands below Qwen3.5 35B (42.8), a mixture-of-experts that activates only 3B parameters per token. OLMo 3.1 32B Think is dense and the same size as Gemma, yet scores 26.0, under half as well. And LFM2.5 8B (24.8), the only genuinely small model here, sits at the bottom. None of these four are ready for Swiss legal work yet.
 
@@ -56,7 +58,7 @@ SwiLTra-Bench splits into three document types, and they are not equally hard.
 
 For the strong models the order is consistent: court-decision summaries are easiest, statutory law sits in the middle, and press releases are hardest. GLM 5.2 scores 71.0 on decision summaries but 60.5 on press releases, and every model in the top eight ranks the subsets in that same order. DeepSeek V4 Pro is the one that pulls ahead on press releases (61.2, the only score above 61 on that subset).
 
-The pattern breaks for the weaker models, and the breakage is revealing. Gemma 4 31B stays near the frontier on decision summaries (63.5) and press releases (59.2) but drops to 48.9 on statutory law, a 14.6-point hole that its translation average hides. Qwen3.5 35B inverts the usual order entirely, with law its worst subset (30.6) and press releases its best (51.5). OLMo 3.1 32B all but fails press releases at 9.6. If your workload is one specific document type, these subset scores matter more than the translation average.
+The pattern breaks for the weaker models, and the breakage is revealing. Gemma 4 31B stays near the frontier on decision summaries (63.5) and press releases (59.2) but drops to 48.9 on statutory law, a 14.6-point gap between its strongest and weakest subsets. Qwen3.5 35B inverts the usual order entirely, with law its worst subset (30.6) and press releases its best (51.5). OLMo 3.1 32B all but fails press releases at 9.6. If your workload is one specific document type, these subset scores matter more than the translation average.
 
 ## Multiple-choice accuracy collapses as options grow
 
