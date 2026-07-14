@@ -13,7 +13,7 @@ jobs:
       - name: Install uv
         uses: astral-sh/setup-uv@v6
       - name: Install dependencies
-        run: GIT_LFS_SKIP_SMUDGE=1 uv sync --extra dev
+        run: GIT_LFS_SKIP_SMUDGE=1 uv sync --python 3.13 --extra dev
       - name: Lint
         run: uv run ruff check src tests scripts/analyze_cap_compare.py
       - name: Test
