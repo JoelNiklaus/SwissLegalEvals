@@ -6,9 +6,9 @@ If you need an open-weight LLM for Swiss legal work in German, French, or Italia
 
 The model that wins overall is not the best translator. And the best translator is one of the weakest at multiple-choice law questions. So the right question is not "which open model is best" but "best at what."
 
-**TL;DR:** Choose GLM 5.2 for translation, Nemotron or a DeepSeek V4 variant for summarization and open-ended legal reasoning, and Gemma 4 31B for local deployment. Gemma scores 54.8 overall and leads the MCQ benchmark; it fits on local hardware while every model above it is a much larger MoE served in the cloud.
-
 This post is for anyone deciding which open model to run on Swiss legal text, and for anyone who wants the current numbers instead of vibes. All results come from a single full run: the raw outputs live in the public [Hugging Face bucket](https://huggingface.co/buckets/joelniklaus/SwissLegalEvals), and the [`run.py` entry point](https://github.com/JoelNiklaus/SwissLegalEvals/blob/main/src/swiss_legal_evals/run.py) reproduces every number below.
+
+**TL;DR:** Choose GLM 5.2 for translation, Nemotron or a DeepSeek V4 variant for summarization and open-ended legal reasoning, and Gemma 4 31B for local deployment. Gemma scores 54.8 overall and leads the MCQ benchmark; it fits on local hardware while every model above it is a much larger MoE served in the cloud.
 
 ![Overall composite score across SLDS, SwiLTra-Bench, and LEXam for 12 comparable open models](figures/overall_ranking.png)
 
