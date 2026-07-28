@@ -48,6 +48,8 @@ API_MODELS=(
 # Local vLLM models: Slurm GPU count = data_parallel_size * tensor_parallel_size
 # from configs/models.yaml (defaults: DP=1, TP=4 for large models; lfm2.5 uses 1 GPU).
 declare -A GPU_MODELS=(
+  [apertus-v1.5-70b]=4
+  [mistral-medium-3.5-128b]=8
   [gpt-oss-120b]=4
   [gemma-4-31b-it]=4
   [qwen3.5-35b-a3b]=4

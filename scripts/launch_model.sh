@@ -31,6 +31,8 @@ if [[ $# -ge 2 ]]; then
 fi
 
 declare -A GPU_MODELS=(
+  [apertus-v1.5-70b]=4
+  [mistral-medium-3.5-128b]=8
   [gpt-oss-120b]=4
   [gemma-4-31b-it]=4
   [qwen3.5-35b-a3b]=4
@@ -55,6 +57,11 @@ if [[ -v GPU_MODELS[$MODEL] ]]; then
   sbatch_args+=(--partition=hopper-prod --gres="gpu:h100:${gpus}" --cpus-per-task="${cpus}")
 else
   sbatch_args+=(--partition=hopper-cpu --cpus-per-task=24)
+fi
+
+# A bounded smoke run must fit the cluster's short-job scheduling window.
+if [[ -n "${MAX_SAMPLES}" ]]; then
+  sbatch_args+=(--time=01:00:00)
 fi
 
 jobid=$(sbatch "${sbatch_args[@]}" scripts/launch_eval.sh)

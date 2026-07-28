@@ -44,6 +44,27 @@ models:
     model: nvidia/NVIDIA-Nemotron-3-Ultra-550B-A55B-NVFP4
     hf_provider: together
 
+  - name: apertus-v1.5-70b
+    provider: vllm
+    model: swiss-ai/Apertus-v1.5-70B
+    # Apertus 1.5 requires the Swiss AI vLLM/Transformers revisions installed
+    # by scripts/setup_vllm.sh.
+    data_parallel_size: 1
+    tensor_parallel_size: 4
+    gpu_memory_utilization: 0.8
+    max_model_length: 65536
+    max_num_batched_tokens: 4096
+
+  - name: mistral-medium-3.5-128b
+    provider: vllm
+    model: mistralai/Mistral-Medium-3.5-128B
+    data_parallel_size: 1
+    tensor_parallel_size: 8
+    gpu_memory_utilization: 0.8
+    max_model_length: 65536
+    max_num_batched_tokens: 16384
+    max_num_seqs: 128
+
   - name: gpt-oss-120b
     provider: vllm
     model: openai/gpt-oss-120b

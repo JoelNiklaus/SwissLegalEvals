@@ -47,9 +47,15 @@ if [[ -z "${MAX_SAMPLES:-}" ]]; then
 fi
 
 source "$HOME/.bashrc"
-module use /admin/opt/modulefiles
-# glibc/2.38 is needed for the patched venv python; cuda/12.9 for the vLLM wheels.
-module load glibc/2.38 cuda/12.9
+# cuda/12.9 is required for the vLLM wheels. glibc/2.38 is only needed when the
+# venv Python still points at /admin/opt/glibc-2.38 (legacy Hopper image).
+if [[ -d /admin/opt/modulefiles ]]; then
+  module use /admin/opt/modulefiles
+fi
+if [[ -e /admin/opt/glibc-2.38/lib/ld-linux-x86-64.so.2 ]]; then
+  module load glibc/2.38
+fi
+module load cuda/12.9
 
 if [[ -n "${SLURM_SUBMIT_DIR:-}" ]]; then
   PROJECT_ROOT="${SLURM_SUBMIT_DIR}"
@@ -59,9 +65,34 @@ else
 fi
 cd "${PROJECT_ROOT}"
 
+# All local vLLM models use the Python 3.12 environment created by
+# setup_vllm.sh. Its Swiss AI vLLM fork is built for the cluster's CUDA 12.9
+# runtime; the normal project vLLM wheel currently resolves to a CUDA 13 binary.
+PYTHON_BIN="${PROJECT_ROOT}/.venv/bin/python"
+case "${MODEL}" in
+  apertus-v1.5-70b|mistral-medium-3.5-128b|gpt-oss-120b|gemma-4-31b-it|qwen3.5-35b-a3b|olmo-3.1-32b-think|lfm2.5-8b|hy-mt2-30b)
+    PYTHON_BIN="${PROJECT_ROOT}/.venv-apertus/bin/python"
+    ;;
+esac
+if [[ ! -x "${PYTHON_BIN}" ]]; then
+  echo "ERROR: ${PYTHON_BIN} does not exist; run scripts/setup_vllm.sh first." >&2
+  exit 1
+fi
+export PATH="$(dirname "${PYTHON_BIN}"):${PATH}"
+export PYTHONPATH="${PROJECT_ROOT}/src:${PYTHONPATH:-}"
+
 # Expose the uv-managed python runtime libs to vLLM/Ray workers.
-PYTHON_LIB_DIR="${UV_PYTHON_LIB_DIR:-$(./.venv/bin/python -c 'import sysconfig; print(sysconfig.get_config_var("LIBDIR") or "")')}"
-export LD_LIBRARY_PATH="${PYTHON_LIB_DIR}:${LD_LIBRARY_PATH:-}"
+PYTHON_LIB_DIR="${UV_PYTHON_LIB_DIR:-$("$PYTHON_BIN" -c 'import sysconfig; print(sysconfig.get_config_var("LIBDIR") or "")')}"
+SITE_PACKAGES="$("$PYTHON_BIN" -c 'import sysconfig; print(sysconfig.get_paths()["purelib"])')"
+# Prefer wheel-bundled NVIDIA libs (esp. cuDNN 9.17) over the CUDA module's
+# older cuDNN on LD_LIBRARY_PATH, which otherwise breaks Apertus multimodal init.
+NVIDIA_LIB_PATH=""
+for nvidia_lib in "${SITE_PACKAGES}"/nvidia/*/lib; do
+  if [[ -d "${nvidia_lib}" ]]; then
+    NVIDIA_LIB_PATH="${NVIDIA_LIB_PATH:+${NVIDIA_LIB_PATH}:}${nvidia_lib}"
+  fi
+done
+export LD_LIBRARY_PATH="${NVIDIA_LIB_PATH:+${NVIDIA_LIB_PATH}:}${PYTHON_LIB_DIR}:${LD_LIBRARY_PATH:-}"
 # Per-job temp dirs so concurrent Ray/Triton workers never clash.
 export RAY_TMPDIR="${RAY_TMPDIR:-${TMPDIR:-/tmp}/swisslegal-ray/${SLURM_JOB_ID}}"
 export TRITON_CACHE_DIR=${RAY_TMPDIR}/triton
@@ -85,5 +116,5 @@ if [[ -n "${TASK_GROUPS:-}" ]]; then
 fi
 
 echo "=== Launching: ${MODEL} (max_samples=${MAX_SAMPLES:-all}, output_dir=${OUTPUT_DIR:-results}) ==="
-./.venv/bin/python -m swiss_legal_evals.run "${ARGS[@]}"
+"${PYTHON_BIN}" -m swiss_legal_evals.run "${ARGS[@]}"
 echo "=== DONE: ${MODEL} ==="

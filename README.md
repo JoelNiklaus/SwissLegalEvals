@@ -28,7 +28,7 @@ mkdir -p scripts/logs/slurm
 sbatch scripts/setup_vllm.sh
 ```
 
-`scripts/setup_vllm.sh` is not the general installation path. It is a cluster-specific patch for our Hopper nodes: it loads glibc 2.38 + CUDA 12.9, installs the cu129 manylinux_2_34 vLLM wheel into `.venv`, applies `glibc-fix`, and installs a tiny `nvJitLink` preload hook so the cu129 wheel does not accidentally pick up older system CUDA libraries. Other users should first try the normal `uv pip install vllm` path and only adapt this script if their cluster has the same CUDA/glibc wheel issue.
+`scripts/setup_vllm.sh` is not the general installation path. It is a cluster-specific setup for our Hopper nodes: it creates a Python 3.12 `.venv-apertus` because the Apertus dependency stack has no CPython 3.13 wheel, installs the pinned Swiss AI vLLM/Transformers revisions with the matching precompiled cu129 extension, optionally applies `glibc-fix` when `/admin/opt/glibc-2.38` is present (skipped on images that only have system glibc 2.35), and installs a tiny `nvJitLink` preload hook so the wheel does not accidentally pick up older system CUDA libraries. `scripts/launch_eval.sh` uses this environment for all local vLLM models; the project `.venv` remains for API-based runs and development. Other users should first try the normal `uv pip install vllm` path.
 
 ## Environment variables
 
@@ -83,11 +83,14 @@ Run one configured model by provider:
 # HF inference providers (large MoE models)
 uv run swiss-legal-evals --models deepseek-v4-pro
 
-# Local vLLM (after setup_vllm.sh on a GPU node)
-uv run swiss-legal-evals --models gemma-4-31b-it qwen3.5-35b-a3b
+# Local vLLM on the cluster (after setup_vllm.sh)
+scripts/launch_model.sh gemma-4-31b-it
+scripts/launch_model.sh qwen3.5-35b-a3b
+scripts/launch_model.sh apertus-v1.5-70b
+scripts/launch_model.sh mistral-medium-3.5-128b
 
-# SwiLTra-only translation specialist
-uv run swiss-legal-evals --models hy-mt2-30b
+# SwiLTra-only translation specialist on the cluster
+scripts/launch_model.sh hy-mt2-30b
 ```
 
 OpenRouter is supported by the runner, but no OpenRouter models are part of the published 2026 run. Add one to `configs/models.yaml` before selecting it:
@@ -98,7 +101,7 @@ OpenRouter is supported by the runner, but no OpenRouter models are part of the 
   model: provider/model-id
 ```
 
-Local `vllm` runs use `tensor_parallel_size` and `data_parallel_size` from `configs/models.yaml`. Current local models use TP4 with DP1 (4 H100s) after Ray data-parallel deadlocks on this cluster; `lfm2.5-8b` uses a single GPU. `scripts/launch_all.sh` requests `data_parallel_size * tensor_parallel_size` GPUs per vLLM job. HF Inference Provider models request no GPUs, only CPUs for orchestration and judging.
+Local `vllm` runs use `tensor_parallel_size` and `data_parallel_size` from `configs/models.yaml`. Current local models use DP1 after Ray data-parallel deadlocks on this cluster: most use TP4 (4 H100s), Apertus 1.5 uses TP4, Mistral Medium 3.5 uses TP8, and `lfm2.5-8b` uses a single GPU. `scripts/launch_all.sh` requests `data_parallel_size * tensor_parallel_size` GPUs per vLLM job. HF Inference Provider models request no GPUs, only CPUs for orchestration and judging.
 
 Full SwiLTra-Bench (all granularity levels):
 
