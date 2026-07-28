@@ -55,9 +55,11 @@ DISPLAY_NAMES = {
     "Llama-3.3-70B-Instruct": "Llama 3.3 70B",
     "LFM2.5-8B-A1B": "LFM2.5 8B",
     "MiniMax-M3": "MiniMax M3",
+    "Mistral-Medium-3.5-128B": "Mistral Medium 3.5 128B",
     "NVIDIA-Nemotron-3-Ultra-550B-A55B-NVFP4": "Nemotron 3 Ultra 550B",
     "Olmo-3.1-32B-Think": "OLMo 3.1 32B Think",
     "Qwen3.5-35B-A3B": "Qwen3.5 35B",
+    "Apertus-v1.5-70B": "Apertus 1.5 70B",
     "gemma-4-31B-it": "Gemma 4 31B",
     "gpt-oss-120b": "gpt-oss 120B",
 }
@@ -72,9 +74,11 @@ ORG_BY_MODEL = {
     "Llama 3.3 70B": "meta-llama",
     "LFM2.5 8B": "LiquidAI",
     "MiniMax M3": "MiniMaxAI",
+    "Mistral Medium 3.5 128B": "mistralai",
     "Nemotron 3 Ultra 550B": "nvidia",
     "OLMo 3.1 32B Think": "allenai",
     "Qwen3.5 35B": "Qwen",
+    "Apertus 1.5 70B": "swiss-ai",
     "Gemma 4 31B": "google",
     "gpt-oss 120B": "openai",
 }
@@ -90,7 +94,9 @@ BRAND_COLORS = {
     "Llama 3.3 70B": "#0467DF",
     "Gemma 4 31B": "#4285F4",
     "gpt-oss 120B": "#202124",
+    "Mistral Medium 3.5 128B": "#F97316",
     "Qwen3.5 35B": "#B03CE6",
+    "Apertus 1.5 70B": "#D52B1E",
     "OLMo 3.1 32B Think": "#F0529C",
     "LFM2.5 8B": "#F59E0B",
     "Hunyuan MT2 30B": "#0052D9",
@@ -212,7 +218,7 @@ def plot_overall(df: pd.DataFrame) -> None:
 
 
 def plot_translation(df: pd.DataFrame) -> None:
-    """SwiLTra-Bench translation average across all 12 models."""
+    """SwiLTra-Bench translation average across all evaluated models."""
     _ranked_bar(
         df, "translation", "Legal translation quality (SwiLTra-Bench, judge score 0-100)",
         "Translation average", "translation.png",
@@ -279,7 +285,7 @@ def plot_mcq_scaling(df: pd.DataFrame) -> None:
 
 
 def plot_translation_subsets(df: pd.DataFrame) -> None:
-    """Judge scores on the three SwiLTra subsets across all 12 models."""
+    """Judge scores on the three SwiLTra subsets across all evaluated models."""
     labels = {"sdst": "Decision summaries", "slt": "Laws", "sscprt": "Press releases"}
     tx = df.dropna(subset=TRANSLATION_COLUMNS).sort_values("translation", ascending=False)
     models = tx["model"].tolist()
