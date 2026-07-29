@@ -20,7 +20,12 @@ models:
   - name: kimi-k3
     provider: hf-inference-providers
     model: moonshotai/Kimi-K3
-    hf_provider: fireworks-ai
+    # fireworks-ai served this 2.8T model at ~26 s/sample, five times slower
+    # than the same provider serves Inkling, which put a full run out of reach.
+    hf_provider: together
+    # Single requests take ~5 min, so throughput is bound by lighteval's default
+    # of 10 concurrent calls rather than by the provider's per-request latency.
+    parallel_calls_count: 40
 
   - name: inkling
     provider: hf-inference-providers
