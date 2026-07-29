@@ -18,6 +18,8 @@ The top five are effectively tied. A task-level bootstrap over the same result f
 
 The gap only becomes decisive further down, with one exception. Gemma 4 31B reaches 54.8 overall, seventh place and within 0.7 of GLM 5.2 (55.5), which is striking for a 31B model sitting among the 500B-class frontier. Size alone does not explain the rest. Mistral Medium 3.5 128B (48.1) is a dense mid-pack model: competent on translation and MCQ, weak on SLDS. Apertus 1.5 70B (40.2) and Llama 3.3 70B (33.0) both land below Qwen3.5 35B (42.8), a mixture-of-experts that activates only 3B parameters per token, despite posting strong translation scores. OLMo 3.1 32B Think is dense and the same size as Gemma, yet scores 26.0, under half as well. And LFM2.5 8B (24.8), the only genuinely small model here, sits at the bottom. None of these lower-tier models are ready for Swiss legal work yet.
 
+One property the scores do not capture: Apertus 1.5 70B and OLMo 3.1 32B Think are the only two open-data models in the field, publishing their training corpora and pipelines rather than just the weights. For courts, administrations, and other public-sector buyers, that auditability can weigh as much as a few composite points, since you can inspect what the model was trained on instead of taking it on trust.
+
 ## What we measure: three Swiss legal benchmarks in three languages
 
 Swiss law is written in German, French, and Italian, and all three benchmarks cover the multilingual case.
