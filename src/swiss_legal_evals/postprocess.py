@@ -12,6 +12,14 @@ DEFAULT_REASONING_TAG_PAIRS: list[tuple[str, str]] = [
     ("<reasoning>", "</reasoning>"),
 ]
 
+# Some chat templates (Qwen3.5, OLMo 3.1 Think) pre-seed the opening reasoning tag
+# into the prompt, so the completion carries only the closing tag. Paired removal
+# cannot fire on those, which would leave the whole trace in the judged text.
+ORPHAN_REASONING_TAG_PAIRS: tuple[tuple[str, str], ...] = (
+    ("<think>", "</think>"),
+    ("<reasoning>", "</reasoning>"),
+)
+
 # gpt-oss / harmony-style final channel markers.
 HARMONY_FINAL_MARKERS: tuple[str, ...] = (
     "assistantfinal",
@@ -42,6 +50,7 @@ def strip_model_reasoning(text: str, target_lang: str | None = None) -> str:
         return text
 
     cleaned = remove_reasoning_tags(text, DEFAULT_REASONING_TAG_PAIRS)
+    cleaned = _strip_orphan_reasoning(cleaned)
 
     for marker in HARMONY_FINAL_MARKERS:
         if marker in cleaned:
@@ -54,6 +63,14 @@ def strip_model_reasoning(text: str, target_lang: str | None = None) -> str:
         cleaned = _extract_translation_continuation(cleaned, target_lang)
 
     return cleaned.strip()
+
+
+def _strip_orphan_reasoning(text: str) -> str:
+    """Drop a reasoning trace that ends with a closing tag but has no opening tag."""
+    for start_tag, end_tag in ORPHAN_REASONING_TAG_PAIRS:
+        if end_tag in text and start_tag not in text:
+            text = text.rsplit(end_tag, 1)[-1]
+    return text
 
 
 def _extract_translation_continuation(text: str, target_lang: str) -> str:
