@@ -22,6 +22,11 @@ models:
     model: moonshotai/Kimi-K3
     hf_provider: fireworks-ai
 
+  - name: inkling
+    provider: hf-inference-providers
+    model: thinkingmachines/Inkling
+    hf_provider: fireworks-ai
+
   - name: glm-5.2
     provider: hf-inference-providers
     model: zai-org/GLM-5.2
