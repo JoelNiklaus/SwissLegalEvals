@@ -43,6 +43,7 @@ LANG_LABELS = {"de": "German", "fr": "French", "it": "Italian"}
 
 # MCQ columns hold ``trad_score`` on a 0-1 scale; everything else is 0-100.
 MCQ_COLUMNS = ["lexam_mcq_4_idk", "lexam_mcq_8_idk", "lexam_mcq_16_idk"]
+MCQ_OPTION_LABELS = ["4 options", "8 options", "16 options"]
 TRANSLATION_COLUMNS = ["sdst", "slt", "sscprt"]
 
 # Map the raw hub names in summary.csv to clean display labels for the charts.
@@ -234,7 +235,13 @@ def plot_slds(df: pd.DataFrame) -> None:
 
 
 def _grouped_bar(
-    long: pd.DataFrame, models: list[str], series_order: list[str], title: str, y_title: str, out: str
+    long: pd.DataFrame,
+    models: list[str],
+    series_order: list[str],
+    title: str,
+    y_title: str,
+    out: str,
+    zeroline: bool = False,
 ) -> None:
     """Grouped vertical bars (one bar group per model), logos under each group."""
     fig = px.bar(
@@ -251,6 +258,9 @@ def _grouped_bar(
     fig.update_layout(
         legend=dict(title="", orientation="h", yanchor="bottom", y=1.02, xanchor="center", x=0.5)
     )
+    # Charts that cross zero need the axis line to read the sign of each bar.
+    if zeroline:
+        fig.update_yaxes(zeroline=True, zerolinecolor="#9CA3AF", zerolinewidth=1)
     _add_logos_and_names(fig, models)
     _save(fig, out)
 
@@ -278,7 +288,7 @@ def plot_task_group_profile(df: pd.DataFrame) -> None:
 
 def plot_mcq_scaling(df: pd.DataFrame) -> None:
     """MCQ accuracy as the number of answer options grows from 4 to 16."""
-    labels = {"lexam_mcq_4_idk": "4 options", "lexam_mcq_8_idk": "8 options", "lexam_mcq_16_idk": "16 options"}
+    labels = dict(zip(MCQ_COLUMNS, MCQ_OPTION_LABELS, strict=True))
     mcq = df.dropna(subset=MCQ_COLUMNS).sort_values("lexam_mcq_4_idk", ascending=False)
     models = mcq["model"].tolist()
     long = (
@@ -289,6 +299,49 @@ def plot_mcq_scaling(df: pd.DataFrame) -> None:
         long, models, list(labels.values()),
         "MCQ accuracy drops as answer options increase (LEXam, trad_score)", "Accuracy (%)",
         "mcq_scaling.png",
+    )
+
+
+def load_mcq_idk() -> pd.DataFrame:
+    """Per-model IDK calibration metrics by number of answer options.
+
+    ``idk_score`` awards +1 for a correct letter, 0 for picking the reserved
+    "I don't know" letter, and -1 for a wrong or unparseable answer.
+    ``idk_freq`` is the share of questions on which the model abstained. Both
+    are averaged over the two LEXam languages (English and German) and scaled to
+    percentage points.
+    """
+    df = pd.read_csv(SUMMARY_LONG_CSV)
+    idk = df[df["family"].str.startswith("lexam_mcq") & df["metric"].isin(["idk_score", "idk_freq"])].copy()
+    idk["options"] = idk["family"].str.extract(r"_(\d+)_")[0].astype(int)
+    mean = idk.groupby(["model", "metric", "options"])["value"].mean().reset_index()
+    mean["score"] = mean["value"] * 100
+    mean["model"] = mean["model"].replace(DISPLAY_NAMES)
+    mean["series"] = mean["options"].map(lambda n: f"{n} options")
+    return mean
+
+
+def plot_mcq_idk_score(idk: pd.DataFrame) -> None:
+    """Penalty-adjusted MCQ score, which turns negative once options grow."""
+    scores = idk[idk["metric"] == "idk_score"]
+    order = scores[scores["options"] == 16].sort_values("score", ascending=False)["model"].tolist()
+    _grouped_bar(
+        scores, order, MCQ_OPTION_LABELS,
+        "Penalty-adjusted MCQ score (LEXam idk_score: +1 correct, 0 abstain, -1 wrong)",
+        "idk_score (percentage points)", "mcq_idk_score.png", zeroline=True,
+    )
+
+
+def plot_mcq_abstention(idk: pd.DataFrame) -> None:
+    """How often each model uses the reserved "I don't know" option."""
+    freq = idk[idk["metric"] == "idk_freq"]
+    order = (
+        freq.groupby("model")["score"].mean().sort_values(ascending=False).index.tolist()
+    )
+    _grouped_bar(
+        freq, order, MCQ_OPTION_LABELS,
+        "How often models abstain on MCQ (LEXam idk_freq)",
+        "Abstention rate (%)", "mcq_abstention.png",
     )
 
 
@@ -360,6 +413,9 @@ def main() -> None:
     plot_translation_subsets(df)
     plot_task_group_profile(df)
     plot_mcq_scaling(df)
+    idk = load_mcq_idk()
+    plot_mcq_idk_score(idk)
+    plot_mcq_abstention(idk)
     plot_language_comparison()
 
 

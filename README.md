@@ -199,7 +199,7 @@ hf buckets sync hf://buckets/joelniklaus/SwissLegalEvals/summary_long.csv result
 uv run python blog/make_figures.py   # writes blog/figures/*.png
 ```
 
-`blog/make_figures.py` writes six static PNGs and uses cached Hugging Face org avatars from `blog/logos/`. The first run downloads missing logos; later runs use the checked-in cache.
+`blog/make_figures.py` writes nine static PNGs and uses cached Hugging Face org avatars from `blog/logos/`. Two of them cover the LEXam IDK calibration, `mcq_idk_score.png` (penalty-adjusted score) and `mcq_abstention.png` (how often each model picks the reserved "I don't know" letter), and read the per-task `idk_score` / `idk_freq` values from `summary_long.csv`. The first run downloads missing logos; later runs use the checked-in cache.
 
 ### Task profiles and generation caps
 

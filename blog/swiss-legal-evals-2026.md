@@ -88,7 +88,19 @@ Kimi K2.6 falls from 67.9% at four options to 44.0% at sixteen. Nemotron falls f
 
 Model size does not protect against this. Gemma 4 31B posts the best MCQ average of the entire field (56.0), ahead of every 500B-class model. For these exam questions, a smaller dense model beats much larger MoEs. Apertus 1.5 70B is the other side of that coin: near-frontier on translation (65.2) and last on MCQ (14.0), the same collapse as Llama 3.3 70B (14.9). Strong Swiss-language generation does not imply exam-style selection.
 
-The `trad_score` in the chart treats "I don't know" as wrong. The benchmark also reports a calibration score (`idk_score`) that rewards abstaining and penalizes confident wrong answers, and it turns negative for every model at 16 options, from -4.3 for the best-calibrated DeepSeek V4 Pro down to -61.3 for LFM2.5 8B. With a wide option set, open models still guess wrong more often than they admit uncertainty.
+## Models guess instead of admitting uncertainty
+
+The `trad_score` in the chart above treats "I don't know" as simply wrong. LEXam also reserves the last letter for abstention and reports `idk_score`, which awards +1 for a correct letter, 0 for abstaining, and -1 for a wrong or unparseable one. That is the metric to read if a wrong answer costs you more than a missing one, which in legal triage it usually does.
+
+![Penalty-adjusted MCQ score (idk_score) at 4, 8, and 16 answer options](figures/mcq_idk_score.png)
+
+At four options, 11 of the 14 models come out positive, led by Kimi K2.6 at 37.9 with Gemma 4 31B (33.7) and Nemotron 3 Ultra (33.6) just behind. At eight options only six are still above zero. At sixteen, not one model is: the two DeepSeek variants come closest to break-even (-4.3 and -6.0), followed by Gemma (-7.5) and Kimi (-11.5), while Apertus 1.5 70B finishes last at -88.2. On a wide option set, every model in this evaluation loses points by answering where it should have declined.
+
+![How often each model picks the reserved "I don't know" option](figures/mcq_abstention.png)
+
+The abstention rates explain why, and they run backwards. Every model that abstains meaningfully at four options does so far less at sixteen, exactly where its chance of guessing right falls from one in four to one in sixteen. OLMo 3.1 32B Think is the most willing to decline, on 37.1% of four-option questions but only 5.2% at sixteen; LFM2.5 8B goes from 24.3% to 3.6%, DeepSeek V4 Pro from 7.3% to 0.9%. Llama 3.3 70B effectively never abstains (0.1% at its highest), and Gemma 4 31B, the accuracy leader, declines on 0.9% of four-option questions and on none of the sixteen-option ones. Because abstention is this rare on the wide set, `idk_score` at 16 options is close to twice the accuracy minus 100, so it barely reorders the field; what it adds is the level, not the ranking.
+
+Two caveats. Unparseable answers also score -1, so GLM 5.2, which fails to yield an extractable letter on 16 to 19% of questions, is penalized partly for formatting rather than for guessing. And abstention has to be earned: OLMo's readiness to decline comes with an MCQ average of 26.4%, fourth-lowest in the field, so declining is not by itself evidence of good calibration. For deployment the practical reading is that none of these models reliably tells you when it does not know, so the confidence gate has to sit outside the model.
 
 ## Italian is the hardest of the three Swiss languages
 
