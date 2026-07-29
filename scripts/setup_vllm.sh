@@ -168,6 +168,37 @@ elif new not in source:
     raise RuntimeError(f"Unexpected lighteval tokenizer implementation in {path}")
 PY
 
+# The Apertus Transformers branch nests `rope_parameters` per attention type
+# (`sliding_attention` / `full_attention`), which OLMo 3 uses to apply YaRN only
+# on full-attention layers. This vLLM revision still expects the flat dict.
+OLMO2_FILE="${SITE_PACKAGES}/vllm/model_executor/models/olmo2.py"
+"$VENV_PYTHON" - "${OLMO2_FILE}" <<'PY'
+from pathlib import Path
+import sys
+
+path = Path(sys.argv[1])
+source = path.read_text()
+old = """        if sliding_window is None:
+            rope_parameters = self.config.rope_parameters
+        else:
+            rope_theta = self.config.rope_parameters["rope_theta"]
+            rope_parameters = {"rope_type": "default", "rope_theta": rope_theta}
+"""
+new = """        rope_parameters = self.config.rope_parameters
+        if "full_attention" in rope_parameters:
+            attention_type = "sliding_attention" if sliding_window else "full_attention"
+            rope_parameters = rope_parameters[attention_type]
+        elif sliding_window is not None:
+            rope_theta = rope_parameters["rope_theta"]
+            rope_parameters = {"rope_type": "default", "rope_theta": rope_theta}
+"""
+
+if old in source:
+    path.write_text(source.replace(old, new, 1))
+elif new not in source:
+    raise RuntimeError(f"Unexpected vLLM Olmo2 rope implementation in {path}")
+PY
+
 {
   echo "${PROJECT_ROOT}/src"
   echo "import swiss_legal_evals.cuda_preload"
