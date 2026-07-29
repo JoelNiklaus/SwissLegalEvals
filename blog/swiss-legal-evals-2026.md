@@ -40,6 +40,20 @@ GLM 5.2 is the mirror image. It is the best translator at 66.2, but the weakest 
 
 If your workload is translation, run GLM 5.2. If it is summarization or open-ended legal reasoning, run Nemotron or a DeepSeek V4 variant. And if you need to run on your own hardware, Gemma 4 31B is the standout: it holds 54.8 overall and tops the field on MCQ, at a size that fits on local hardware while every model above it is a far larger MoE served in the cloud.
 
+## Summarization is the hardest of the four task groups
+
+Writing the headnote for a Federal Supreme Court leading decision is where open models are weakest. The best SLDS score in the field is 55.1, while the best translation average is 66.2, the best LEXam open-question score 66.5, and the best MCQ average 56.0. The mean across the fourteen models that ran SLDS is 40.5.
+
+![SLDS headnote summarization judge score for the 14 models that ran the benchmark](figures/slds.png)
+
+Nemotron 3 Ultra leads at 55.1, the only model above 53, which is most of why it wins the composite. GLM 5.2 is second at 52.3 despite being the weakest of the frontier tier on both LEXam groups, so its profile is strong generation and weak selection. DeepSeek V4 Flash (51.0) edges out DeepSeek V4 Pro (50.5), the larger sibling.
+
+The middle of the field is compressed. Nine models sit between 46.3 and 55.1, a range narrower than the gap between ninth and tenth place. Qwen3.5 35B is the notable entry there at 46.7, ahead of gpt-oss 120B and within 1.3 points of Gemma 4 31B: a mixture-of-experts activating 3B parameters per token holds its own on summarization, even though weak translation drops it to tenth overall.
+
+Below that cluster the field falls off a cliff. Apertus 1.5 70B manages 38.0 and Mistral Medium 3.5 128B 34.0, both roughly 8 to 12 points below the compressed middle. OLMo 3.1 32B Think (18.4), Llama 3.3 70B (16.1), and LFM2.5 8B (11.1) are at the floor: they do not reliably produce a usable headnote at all, which is the single biggest reason their composite scores collapse.
+
+Two details are worth knowing before you trust these numbers. SLDS is judged by DeepSeek V4 Pro, so the DeepSeek models could carry a self-preference bias, though in practice both land mid-tier rather than first, which argues against a large effect. And headnote language matters: averaged over all models the German headnotes score 42.8, French 41.5, and Italian 37.2, and staying in the source language (42.4) beats translating across it (39.5).
+
 ## A 3B-active specialist nearly matches the frontier in translation
 
 The models perform best in translation: twelve of fifteen score at least 57 out of 100. GLM 5.2 tops it at 66.2, ahead of Kimi K2.6 (65.3) and Apertus 1.5 70B (65.2). Apertus is the Swiss open model in this lineup, and on translation it sits with the frontier MoEs — third overall, and first on court-decision summaries at 71.7.
@@ -118,7 +132,7 @@ The open frontier on Swiss legal tasks is close and specialized. Five models fin
 
 The three benchmarks are integrated directly into [lighteval](https://github.com/huggingface/lighteval), including the paper-grounded LLM judges, so scoring a model is one command rather than a pile of glue scripts. That integration is what makes the whole pipeline, from generation to judging to aggregation, run end to end on any model you point it at.
 
-The full-run results, the four figures above, and the underlying tables live in the public bucket [`joelniklaus/SwissLegalEvals`](https://huggingface.co/buckets/joelniklaus/SwissLegalEvals). To regenerate the charts:
+The full-run results, the figures above, and the underlying tables live in the public bucket [`joelniklaus/SwissLegalEvals`](https://huggingface.co/buckets/joelniklaus/SwissLegalEvals). To regenerate the charts:
 
 ```bash
 uv sync --extra dev   # figure export needs kaleido, in the dev group

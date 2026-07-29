@@ -225,6 +225,14 @@ def plot_translation(df: pd.DataFrame) -> None:
     )
 
 
+def plot_slds(df: pd.DataFrame) -> None:
+    """SLDS headnote summarization across all models that ran the benchmark."""
+    _ranked_bar(
+        df, "slds", "Legal headnote summarization (SLDS, judge score 0-100)",
+        "SLDS judge score", "slds.png",
+    )
+
+
 def _grouped_bar(
     long: pd.DataFrame, models: list[str], series_order: list[str], title: str, y_title: str, out: str
 ) -> None:
@@ -347,6 +355,7 @@ def main() -> None:
     FIGURES_DIR.mkdir(parents=True, exist_ok=True)
     df = load_scores()
     plot_overall(df)
+    plot_slds(df)
     plot_translation(df)
     plot_translation_subsets(df)
     plot_task_group_profile(df)
