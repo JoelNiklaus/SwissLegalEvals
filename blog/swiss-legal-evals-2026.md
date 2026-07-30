@@ -150,8 +150,6 @@ The open frontier on Swiss legal tasks is close and specialized. Five models fin
 
 On the task closest to the daily work of a Swiss court, Apertus 1.5 70B comes out on top. It leads the court-decision translation subset at 71.7, ahead of GLM 5.2 (71.0) and Kimi K2.6 (70.1), and ahead of models eight to twenty times its size, including Nemotron 3 Ultra 550B (69.6) and the 1.6T DeepSeek V4 Pro (69.2). The margin is within benchmark noise, so this is a shared top spot rather than a clear win.
 
-It is not competitive everywhere. Its MCQ average of 14.0 is the weakest in the field, and that collapse pulls its composite down to 40.2, eleventh of fourteen. Exam-style legal reasoning is where the gap to the frontier is widest.
-
 Two properties beyond the scores matter for a judiciary buyer. Apertus is one of the two open-data models noted earlier, and by a wide margin the stronger of the pair, so a court can inspect what the model was trained on instead of taking it on trust. And at 70B in BF16 it needs roughly 140 GB of weights, which fits on two H100s on-premises, so case material never has to leave the building.
 
 Leading quality on judicial translation, full auditability, and on-premises deployment together make Apertus a credible foundation for the Swiss Justice Base Model, the initiative of the Swiss Federal Supreme Court, the eJustice association, and the Swiss AI Initiative. The gaps this evaluation exposes, above all multiple-choice legal reasoning, are the obvious targets for domain-specific continued training and alignment.
