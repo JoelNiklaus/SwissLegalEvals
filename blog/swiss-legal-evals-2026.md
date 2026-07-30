@@ -148,7 +148,7 @@ The open frontier on Swiss legal tasks is close and specialized. Five models fin
 
 ## What this means for the Swiss Justice Base Model
 
-On the task closest to the daily work of a Swiss court, Apertus 1.5 70B comes out on top. It leads the court-decision translation subset at 71.7, ahead of GLM 5.2 (71.0) and Kimi K2.6 (70.1), and ahead of models eight to twenty times its size, including Nemotron 3 Ultra 550B (69.6) and the 1.6T DeepSeek V4 Pro (69.2). The margin over the next model is well inside the noise of a judge-scored benchmark, so the honest reading is that Apertus belongs to the leading group rather than that it clearly wins — which is still a striking result for a 70B dense model against the frontier MoEs.
+On the task closest to the daily work of a Swiss court, Apertus 1.5 70B comes out on top. It leads the court-decision translation subset at 71.7, ahead of GLM 5.2 (71.0) and Kimi K2.6 (70.1), and ahead of models eight to twenty times its size, including Nemotron 3 Ultra 550B (69.6) and the 1.6T DeepSeek V4 Pro (69.2). The margin is within benchmark noise, so this is a shared top spot rather than a clear win.
 
 It is not competitive everywhere. Its MCQ average of 14.0 is the weakest in the field, and that collapse pulls its composite down to 40.2, eleventh of fourteen. Exam-style legal reasoning is where the gap to the frontier is widest.
 
