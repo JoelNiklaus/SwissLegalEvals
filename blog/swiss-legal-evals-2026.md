@@ -112,12 +112,14 @@ French comes out highest on average (50.4 across the 14 comparable models), Germ
 
 ## Model sizes and the hardware to run them
 
-Two numbers decide the cost of serving a model. Total parameters set how much memory the weights occupy, and active parameters set how much compute each token costs. The open field here runs from 8.5B to 1.6T total parameters, and native precision matters as much as parameter count.
+Two numbers decide the cost of serving a model. Total parameters set how much memory the weights occupy, and active parameters set how much compute each token costs. The open field here runs from 8.5B to 2.8T total parameters, and native precision matters as much as parameter count. Kimi K3 and Inkling are listed for sizing; their benchmark runs are still in flight, so they do not yet appear in the score charts above.
 
 | Model                      | Total | Active | Precision | Weights  | Runs on       |
 |----------------------------|------:|-------:|-----------|---------:|---------------|
+| Kimi K3                    |  2.8T |   104B | INT4+BF16 | ~1.55 TB | 11x H200      |
 | DeepSeek V4 Pro            |  1.6T |    49B | FP4+FP8   | ~0.85 TB | 8x H200       |
 | Kimi K2.6                  |    1T |    32B | INT4      |  ~0.5 TB | 4x H200       |
+| Inkling                    |  975B |    41B | BF16      |  ~1.9 TB | 14x H200      |
 | GLM 5.2                    |  753B |    40B | BF16      |  ~1.5 TB | 11x H200      |
 | Nemotron 3 Ultra 550B      |  550B |    55B | NVFP4     |  ~275 GB | 4x H100       |
 | MiniMax M3                 |  428B |    23B | BF16      | ~0.85 TB | 7x H200       |
@@ -132,9 +134,9 @@ Two numbers decide the cost of serving a model. Total parameters set how much me
 | Hunyuan MT2 30B            |   30B |     3B | BF16      |   ~60 GB | 1x H100       |
 | LFM2.5 8B                  |  8.5B |     1B | BF16      |   ~17 GB | 1x 24 GB GPU  |
 
-Weights are total parameters times bytes per parameter (BF16 = 2, FP8 = 1, INT4/FP4 = 0.5), before the KV cache that long context adds; GPU counts assume 80 GB (H100) or 141 GB (H200) cards. We ran local vLLM models above the weight-only minimum for 64k-context throughput (Apertus on 4 H100s, Mistral Medium on 8).
+Weights are total parameters times bytes per parameter (BF16 = 2, FP8 = 1, INT4/FP4 = 0.5), before the KV cache that long context adds; GPU counts assume 80 GB (H100) or 141 GB (H200) cards. Kimi K3 is the exception to that arithmetic: it quantizes its experts to 4 bits but keeps attention and embeddings in BF16, so its published checkpoint is ~1.55 TB rather than the ~1.4 TB a flat 4-bit rule would predict. We ran local vLLM models above the weight-only minimum for 64k-context throughput (Apertus on 4 H100s, Mistral Medium on 8).
 
-Precision shifts the picture as much as size. Kimi K2.6 has more total parameters than GLM 5.2 (1T versus 753B), but it ships as INT4, so its weights (~0.5 TB) are a third of GLM's BF16 footprint (~1.5 TB). Mistral Medium 3.5 is a dense 128B that ships in FP8 (~128 GB), so it fits where a BF16 twin would not. Nine of the fifteen models need a multi-GPU server; the other six fit on one accelerator, and five of those run on a single 80 GB H100. That is the case for Gemma 4 31B: near-frontier quality (54.8 overall) from one GPU, while every model ranked above it needs several.
+Precision shifts the picture as much as size. Kimi K2.6 has more total parameters than GLM 5.2 (1T versus 753B), but it ships as INT4, so its weights (~0.5 TB) are a third of GLM's BF16 footprint (~1.5 TB). The same inversion appears at the top of the table: Kimi K3 carries nearly three times Inkling's parameters (2.8T versus 975B) yet needs less memory (~1.55 TB versus ~1.9 TB), because it ships mostly quantized while Inkling ships in BF16. Mistral Medium 3.5 is a dense 128B that ships in FP8 (~128 GB), so it fits where a BF16 twin would not. Eleven of the seventeen models need a multi-GPU server; the other six fit on one accelerator, and five of those run on a single 80 GB H100. That is the case for Gemma 4 31B: near-frontier quality (54.8 overall) from one GPU, while every model ranked above it needs several.
 
 ## Known limitations
 
