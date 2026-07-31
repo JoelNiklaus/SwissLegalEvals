@@ -258,6 +258,8 @@ These choices explain the shape of the repo if you are getting oriented:
 7. **API generations stream.** HF inference-provider model calls stream chat completions so long generations keep the router connection alive instead of timing out.
 8. **Transient provider failures are isolated per sample.** Model and judge calls retry independently; exhausted calls are logged as missing judgments or generations so one provider outage does not discard an entire batch.
 9. **Existing sample caches are reused across restarts.** If lighteval assigns an equivalent task a different in-process hash, the fullest previously loaded cache is selected and only missing samples are regenerated.
+10. **Generation is chunked so the cache survives a crash.** lighteval writes its sample cache only after a whole batch finishes, so a run that dies mid-batch saves nothing. `cache_patch.py` calls generation in chunks of 500 docs, making every chunk boundary a cache checkpoint; a crash costs at most one chunk and the relaunch resumes. Set `SWISS_LEGAL_EVALS_CACHE_CHUNK_SIZE` to trade throughput against the size of that loss window.
+11. **API calls have a request timeout.** lighteval's inference-providers client defaults to no timeout, so a stream the provider stops feeding blocks forever. Runs default to 1800 s, overridable per model with `timeout` in `configs/models.yaml`. Note that changing it alters the model-config hash, so a model's existing sample cache is not reused.
 
 ## Layout
 

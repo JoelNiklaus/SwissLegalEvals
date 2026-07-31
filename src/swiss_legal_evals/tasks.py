@@ -49,6 +49,7 @@ from lighteval.tasks.multilingual.tasks.swiss_legal.metrics import (
 from lighteval.tasks.requests import Doc, SamplingMethod
 from transformers import AutoTokenizer
 
+from swiss_legal_evals.cache_patch import enable_incremental_caching
 from swiss_legal_evals.postprocess import (
     extract_mcq_letter_fallback,
     prediction_from_response,
@@ -555,6 +556,9 @@ _patch_inference_providers_reasoning_field()
 _patch_judge_hf_org_billing()
 _patch_judge_inference_provider_retries()
 _patch_lighteval_cache_hash_reuse()
+# Must come last: chunking has to wrap the fully patched `greedy_until`, so every
+# chunk still goes through the reasoning-field handling and the cache decorator.
+enable_incremental_caching()
 
 JudgeProvider = Literal["openai", "openrouter", "hf-inference-providers"]
 JudgeBackend = Literal["litellm", "inference-providers"]
