@@ -31,6 +31,11 @@ CUSTOM_TASKS_PATH = PACKAGE_ROOT / "tasks.py"
 OUTPUT_DIR = PROJECT_ROOT / "results"
 LIGHTEVAL_CMD = [sys.executable, "-m", "lighteval"]
 DEFAULT_VLLM_DATA_PARALLEL_SIZE = 8
+# lighteval leaves the inference-providers client without a request timeout, so a
+# stream the provider stops feeding blocks the whole run forever (Kimi K3 hung on
+# its last two prompts after 25 h). Well above legitimate latency, which peaks in
+# the low tens of minutes for large thinking models under provider queueing.
+DEFAULT_API_TIMEOUT_SECONDS = 1800
 
 
 def _configure_logging(verbose: bool) -> None:
@@ -72,6 +77,8 @@ def _inference_providers_model_args(model: str, hf_provider: str, extra: dict[st
         org = hf_org_to_bill()
         if org is not None:
             parts.append(f"org_to_bill={org}")
+    if "timeout" not in extra:
+        parts.append(f"timeout={DEFAULT_API_TIMEOUT_SECONDS}")
     for key, value in extra.items():
         if key in ("name", "provider", "model", "tasks", "hf_provider"):
             continue

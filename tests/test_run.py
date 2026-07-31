@@ -8,6 +8,7 @@ from pathlib import Path
 import pytest
 
 from swiss_legal_evals.run import (
+    DEFAULT_API_TIMEOUT_SECONDS,
     LIGHTEVAL_CMD,
     _required_judge_keys_for_task_string,
     _subprocess_env,
@@ -60,7 +61,10 @@ def test_inference_providers_command() -> None:
         max_samples=10,
     )
     assert "inference-providers" in cmd
-    assert "model_name=deepseek-ai/DeepSeek-V4-Pro,provider=together" in cmd
+    model_args = cmd[cmd.index("inference-providers") + 1]
+    assert model_args.startswith("model_name=deepseek-ai/DeepSeek-V4-Pro,provider=together")
+    # Without a timeout the client waits forever on a stream the provider abandons.
+    assert f"timeout={DEFAULT_API_TIMEOUT_SECONDS}" in model_args
     assert "--max-samples" in cmd
     assert "10" in cmd
 
