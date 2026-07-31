@@ -3,6 +3,9 @@
 from __future__ import annotations
 
 import asyncio
+import os
+import subprocess
+import sys
 
 import pytest
 from huggingface_hub.inference._generated.types.chat_completion import (
@@ -11,6 +14,7 @@ from huggingface_hub.inference._generated.types.chat_completion import (
     ChatCompletionStreamOutputDelta,
 )
 from lighteval.metrics.utils.llm_as_judge import JudgeLM
+from lighteval.tasks.multilingual.tasks.swiss_legal.main import _build_lexam_mcq_prompt_fn
 from lighteval.tasks.requests import SamplingMethod
 from lighteval.utils.cache_management import TaskID
 
@@ -306,3 +310,46 @@ def test_strict_slds_judge_accepts_terminal_score_text() -> None:
         ]
     )
     assert _strict_slds_judge()._process_judge_response(response) == pytest.approx(0.5)
+
+
+def _mcq_line() -> dict[str, object]:
+    return {
+        "question": "Which statement is correct?",
+        "choices": ["alpha", "beta", "gamma", "delta"],
+        "gold": 2,
+        "course": "Civil Law",
+    }
+
+
+def test_mcq_option_order_does_not_depend_on_call_order() -> None:
+    """A question must get the same letters no matter how many were built before it."""
+    prompt_fn = _build_lexam_mcq_prompt_fn(with_idk=True)
+    first = prompt_fn(_mcq_line(), "t")
+    for _ in range(7):
+        prompt_fn({**_mcq_line(), "question": "filler", "choices": ["w", "x", "y", "z"]}, "t")
+    later = prompt_fn(_mcq_line(), "t")
+
+    assert later.query == first.query
+    assert later.gold_index == first.gold_index
+
+
+def test_mcq_option_order_is_stable_across_processes() -> None:
+    """Cached generations get scored in a later process, so the order must survive it."""
+    script = (
+        "import swiss_legal_evals.tasks;"
+        "from lighteval.tasks.multilingual.tasks.swiss_legal.main import _build_lexam_mcq_prompt_fn;"
+        f"doc=_build_lexam_mcq_prompt_fn(with_idk=True)({_mcq_line()!r},'t');"
+        "print(doc.gold_index);print(doc.query)"
+    )
+    # A different hash seed would change any order derived from built-in hashing.
+    env = {**os.environ, "PYTHONHASHSEED": "12345"}
+    out = subprocess.run(
+        [sys.executable, "-c", script], capture_output=True, text=True, check=True, env=env
+    ).stdout
+    gold_index, query = out.split("\n", 1)
+
+    local = _build_lexam_mcq_prompt_fn(with_idk=True)(_mcq_line(), "t")
+    assert int(gold_index) == local.gold_index
+    assert query.strip() == local.query.strip()
+
+

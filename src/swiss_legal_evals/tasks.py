@@ -2,8 +2,10 @@
 
 from __future__ import annotations
 
+import hashlib
 import logging
 import os
+import random
 import re
 import statistics
 from collections.abc import Mapping
@@ -552,10 +554,37 @@ def _patch_lighteval_cache_hash_reuse() -> None:
     SampleCache._swisslegal_cache_hash_patch = True  # type: ignore[attr-defined]
 
 
+def _patch_deterministic_mcq_shuffle() -> None:
+    """Derive each LEXam MCQ option order from the question, not from a shared RNG stream.
+
+    lighteval shuffles the substantive choices with one module-level ``random.Random``,
+    so the permutation a question receives depends on how many questions were shuffled
+    before it in that process. Scoring cached generations in a fresh process therefore
+    re-rolls the letters and marks correct answers wrong: it silently invalidated the
+    MCQ scores of the two runs that resumed from a cache. Seeding from the choice texts
+    makes the order identical in every process, whatever the task order or sample count.
+    """
+    from lighteval.tasks.multilingual.tasks.swiss_legal import main as swiss_legal_main
+
+    if getattr(swiss_legal_main, "_swisslegal_deterministic_shuffle", False):
+        return
+
+    class _PerQuestionShuffler:
+        """Stands in for the module RNG; the prompt function only calls ``shuffle``."""
+
+        def shuffle(self, choices: list[str]) -> None:
+            digest = hashlib.sha256("\x1f".join(map(str, choices)).encode()).hexdigest()
+            random.Random(digest).shuffle(choices)
+
+    swiss_legal_main._LEXAM_RNG = _PerQuestionShuffler()
+    swiss_legal_main._swisslegal_deterministic_shuffle = True
+
+
 _patch_inference_providers_reasoning_field()
 _patch_judge_hf_org_billing()
 _patch_judge_inference_provider_retries()
 _patch_lighteval_cache_hash_reuse()
+_patch_deterministic_mcq_shuffle()
 # Must come last: chunking has to wrap the fully patched `greedy_until`, so every
 # chunk still goes through the reasoning-field handling and the cache decorator.
 enable_incremental_caching()
