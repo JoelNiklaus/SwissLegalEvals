@@ -17,6 +17,24 @@ def test_parse_family() -> None:
     assert parse_family("lexam_mcq_4_idk:en|0") == "lexam_mcq_4_idk"
 
 
+def test_partial_rerun_supersedes_only_the_tasks_it_repeated(tmp_path: Path) -> None:
+    """A re-run of one family must not drop the families it did not touch."""
+    model_dir = tmp_path / "swiss-ai__Apertus-v1.5-70B"
+    model_dir.mkdir(parents=True)
+    (model_dir / "results_2026-07-28T00-00-00.json").write_text(
+        json.dumps({"results": {"slds:de_de|0": {"judge": 70.0}, "lexam_mcq_4_idk:en|0": {"trad_score": 0.14}}})
+    )
+    (model_dir / "results_2026-07-31T00-00-00.json").write_text(
+        json.dumps({"results": {"lexam_mcq_4_idk:en|0": {"trad_score": 0.58}}})
+    )
+
+    df = results_to_long_df(tmp_path)
+    by_task = df.set_index("task")["value"]
+
+    assert by_task["slds:de_de|0"] == 70.0
+    assert by_task["lexam_mcq_4_idk:en|0"] == 0.58
+
+
 def test_results_to_long_df(tmp_path: Path) -> None:
     model_dir = tmp_path / "deepseek-ai__DeepSeek-V4-Pro"
     model_dir.mkdir(parents=True)

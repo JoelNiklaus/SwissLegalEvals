@@ -41,15 +41,17 @@ def load_results_json(path: Path) -> dict:
         return json.load(f)
 
 
-def _discover_latest_results(results_root: Path) -> dict[str, Path]:
-    """Map model directory name to the latest results_*.json (per plan glob)."""
+def _discover_latest_results(results_root: Path) -> dict[str, list[Path]]:
+    """Map each model directory name to its results_*.json files, oldest first.
+
+    All runs are kept rather than only the newest, because a model is often
+    re-run for a subset of tasks; the caller resolves each task to its most
+    recent result so a partial re-run does not drop the untouched families.
+    """
     by_model: dict[str, list[Path]] = {}
     for path in sorted(results_root.rglob("results_*.json")):
         by_model.setdefault(path.parent.name, []).append(path)
-    latest: dict[str, Path] = {}
-    for model_name, paths in by_model.items():
-        latest[model_name] = paths[-1]
-    return latest
+    return by_model
 
 
 def results_to_long_df(results_dir: Path) -> pd.DataFrame:
@@ -59,13 +61,15 @@ def results_to_long_df(results_dir: Path) -> pd.DataFrame:
     if not results_dir.exists():
         raise FileNotFoundError(f"Results directory not found: {results_dir}")
 
-    latest_files = _discover_latest_results(results_dir)
-    if not latest_files:
+    runs_by_model = _discover_latest_results(results_dir)
+    if not runs_by_model:
         raise ValueError(f"No results_*.json files under {results_dir}")
 
-    for model_name, results_file in sorted(latest_files.items()):
-        payload = load_results_json(results_file)
-        metrics = payload["results"]
+    for model_name, results_files in sorted(runs_by_model.items()):
+        # Runs are ordered oldest first, so a later run supersedes the tasks it repeated.
+        metrics: dict[str, dict[str, float]] = {}
+        for results_file in results_files:
+            metrics.update(load_results_json(results_file)["results"])
 
         for task_full_name, task_metrics in metrics.items():
             if _is_lighteval_summary_row(task_full_name):

@@ -23,6 +23,9 @@
 #   MAX_SAMPLES  optional: cap per task config (omit for full runs)
 #   OUTPUT_DIR   optional: lighteval output dir (default: results)
 #   TASK_GROUPS  optional: space-separated task groups (e.g. slds); do not use GROUPS (bash builtin)
+#   TASK_STRING  optional: explicit lighteval task list, for re-running single tasks.
+#                Export it before sbatch (--export=ALL carries it); its commas
+#                would otherwise be parsed as separate --export entries.
 #SBATCH --partition=hopper-prod
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
@@ -113,6 +116,9 @@ fi
 if [[ -n "${TASK_GROUPS:-}" ]]; then
   # shellcheck disable=SC2206
   ARGS+=(--groups ${TASK_GROUPS})
+fi
+if [[ -n "${TASK_STRING:-}" ]]; then
+  ARGS+=(--task-string "${TASK_STRING}")
 fi
 
 echo "=== Launching: ${MODEL} (max_samples=${MAX_SAMPLES:-all}, output_dir=${OUTPUT_DIR:-results}) ==="
