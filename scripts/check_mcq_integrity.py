@@ -48,13 +48,33 @@ def check_file(path: pathlib.Path) -> dict[str, object]:
     }
 
 
+def _task_key(path: pathlib.Path) -> tuple[str, str]:
+    """Model plus task, ignoring the run timestamp appended to the file name."""
+    model = "/".join(path.parts[-4:-2])
+    task = path.name.split("_2026-")[0]
+    return model, task
+
+
+def _effective_files(files: list[pathlib.Path]) -> list[pathlib.Path]:
+    """Keep only the run that feeds the aggregation for each model and task.
+
+    Aggregation resolves every task to its most recent run, so a superseded run
+    is dead weight; checking it would report failures that no longer reach a
+    published number.
+    """
+    newest: dict[tuple[str, str], pathlib.Path] = {}
+    for path in sorted(files, key=lambda p: p.parts[-2]):
+        newest[_task_key(path)] = path
+    return sorted(newest.values())
+
+
 def main() -> int:
     logging.basicConfig(level=logging.INFO, format="%(message)s")
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--details-dir", type=pathlib.Path, default=DEFAULT_DETAILS_DIR)
     args = parser.parse_args()
 
-    files = sorted(args.details_dir.rglob("details_lexam_mcq*.parquet"))
+    files = _effective_files(sorted(args.details_dir.rglob("details_lexam_mcq*.parquet")))
     if not files:
         raise FileNotFoundError(f"No MCQ detail files under {args.details_dir}")
     logger.info("Checking %d MCQ detail files", len(files))
