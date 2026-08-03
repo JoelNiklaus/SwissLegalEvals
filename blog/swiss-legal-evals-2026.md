@@ -48,11 +48,7 @@ Writing the headnote for a Federal Supreme Court leading decision is where open 
 
 ![SLDS headnote summarization judge score for the 16 models that ran the benchmark](figures/slds.png)
 
-Nemotron 3 Ultra leads at 55.1, the only model above 54, and this is the one group where it beats Inkling (53.4). GLM 5.2 is third at 52.3 despite being the frontier tier's weakest on both LEXam groups, so its profile is strong generation and weak selection.
-
-The middle is compressed: nine models sit between 46.3 and 53.4, a range narrower than the gap between ninth and tenth place. Qwen3.5 35B is the notable entry at 46.7, ahead of gpt-oss 120B and within 1.3 points of Gemma 4 31B, so a mixture-of-experts activating 3B parameters per token holds its own on summarization.
-
-Below that cluster the field falls off a cliff. Apertus 1.5 70B manages 38.0 and Mistral Medium 3.5 128B 34.0, both 8 to 12 points below the middle. The bottom three, from OLMo 3.1 32B Think (26.8) through Llama 3.3 70B to LFM2.5 8B (11.1), do not reliably produce a usable headnote at all, the single biggest reason their composites collapse.
+Nemotron 3 Ultra leads at 55.1, the only model above 54, and this is the one group where it beats Inkling (53.4). Nine models are packed between 46.3 and 53.4, and below them the field falls off a cliff: Apertus 1.5 70B manages 38.0, Mistral Medium 3.5 128B 34.0, and the bottom three, from OLMo 3.1 32B Think (26.8) to LFM2.5 8B (11.1), do not reliably produce a usable headnote at all, the single biggest reason their composites collapse.
 
 Two details qualify these numbers. SLDS is judged by DeepSeek V4 Pro, so the DeepSeek models could carry a self-preference bias, though both land mid-tier rather than first, which argues against a large effect. And headnote language matters: averaged over all models German scores 45.1, French 44.0, and Italian 38.4, and staying in the source language (44.2) beats translating across it (41.6).
 
