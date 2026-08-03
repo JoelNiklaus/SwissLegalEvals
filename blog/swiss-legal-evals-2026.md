@@ -12,7 +12,7 @@ This post is for anyone deciding which open model to run on Swiss legal text and
 
 ![Overall composite score across SLDS, SwiLTra-Bench, and LEXam for 16 comparable open models](figures/overall_ranking.png)
 
-Inkling leads the composite at 62.3. Nemotron 3 Ultra 550B follows at 59.0, then Kimi K2.6 (58.6), DeepSeek V4 Pro (58.3), DeepSeek V4 Flash (57.3), Kimi K3 (57.0), and MiniMax M3 (56.9).
+Inkling leads the composite at 62.3, ahead of Nemotron 3 Ultra 550B at 59.0. The five models behind them, from Kimi K2.6 down to MiniMax M3, all land between 58.6 and 56.9.
 
 Ranks two through seven are effectively tied, and Inkling's lead is suggestive rather than established. A task-level bootstrap over the same result files (10,000 resamples within each benchmark family, [`scripts/bootstrap_composite.py`](https://github.com/JoelNiklaus/SwissLegalEvals/blob/main/scripts/bootstrap_composite.py)) gives 95% intervals with half-widths of 3.2 to 3.9 points for this tier — wider than both the 2.1 points from second to seventh and the 3.3 from first to second. That uncertainty matches recent LLM-as-judge work: [JudgeSense](https://arxiv.org/abs/2604.23478) finds equivalent prompt rephrasings can flip judge decisions, and [Li et al.](https://arxiv.org/abs/2506.22316) show score-based judges shift under rubric and reference-answer perturbations. The composite averages four task groups (SLDS summarization, LEXam open questions, translation, and MCQ), each on a 0-100 scale.
 
@@ -38,9 +38,7 @@ Averaging into one number hides where these models diverge. Choose on the per-gr
 
 ![Per-group scores for the top seven models by composite](figures/task_group_profile.png)
 
-Inkling is the broadest model in the field, leading translation (67.4), LEXam open questions (67.7), and MCQ (60.7). The one group it does not win is summarization, where Nemotron 3 Ultra takes SLDS at 55.1 against Inkling's 53.4.
-
-GLM 5.2 is the specialist counterexample: third at translation (66.2, within 1.2 of the top) but weakest of this tier on LEXam open questions (58.8) and MCQ (44.6), which is why it sits eighth overall.
+Inkling is the broadest model in the field, leading translation (67.4), LEXam open questions (67.7), and MCQ (60.7). The one group it does not win is summarization, where Nemotron 3 Ultra takes SLDS at 55.1 against Inkling's 53.4. GLM 5.2 is the specialist counterexample: third at translation (66.2, within 1.2 of the top) but weakest of this tier on LEXam open questions (58.8) and MCQ (44.6), which is why it sits eighth overall.
 
 So the choice comes down to what you run and where. For translation, Inkling, Kimi K3 (66.9), and GLM 5.2 (66.2) are separated by 1.2 points, so pick on serving cost. For summarization, Nemotron 3 Ultra is the clear choice and the most practical of the leaders, since NVFP4 weights let it run on four H100s. For open-ended legal reasoning, Inkling and Nemotron lead. And if you need your own hardware, Gemma 4 31B is the standout: 54.8 overall and second on MCQ from a single GPU, while every model above it is a far larger MoE served in the cloud.
 
@@ -50,23 +48,23 @@ Writing the headnote for a Federal Supreme Court leading decision is where open 
 
 ![SLDS headnote summarization judge score for the 16 models that ran the benchmark](figures/slds.png)
 
-Nemotron 3 Ultra leads at 55.1, the only model above 54, and this is the one group where it beats Inkling (53.4). GLM 5.2 is third at 52.3 despite being the frontier tier's weakest on both LEXam groups, so its profile is strong generation and weak selection. DeepSeek V4 Flash and Kimi K3 tie at 51.0, both edging out DeepSeek V4 Pro (50.5).
+Nemotron 3 Ultra leads at 55.1, the only model above 54, and this is the one group where it beats Inkling (53.4). GLM 5.2 is third at 52.3 despite being the frontier tier's weakest on both LEXam groups, so its profile is strong generation and weak selection.
 
 The middle is compressed: nine models sit between 46.3 and 53.4, a range narrower than the gap between ninth and tenth place. Qwen3.5 35B is the notable entry at 46.7, ahead of gpt-oss 120B and within 1.3 points of Gemma 4 31B, so a mixture-of-experts activating 3B parameters per token holds its own on summarization.
 
-Below that cluster the field falls off a cliff. Apertus 1.5 70B manages 38.0 and Mistral Medium 3.5 128B 34.0, both 8 to 12 points below the middle. OLMo 3.1 32B Think (26.8), Llama 3.3 70B (16.1), and LFM2.5 8B (11.1) are at the floor: they do not reliably produce a usable headnote at all, the single biggest reason their composites collapse.
+Below that cluster the field falls off a cliff. Apertus 1.5 70B manages 38.0 and Mistral Medium 3.5 128B 34.0, both 8 to 12 points below the middle. The bottom three, from OLMo 3.1 32B Think (26.8) through Llama 3.3 70B to LFM2.5 8B (11.1), do not reliably produce a usable headnote at all, the single biggest reason their composites collapse.
 
 Two details qualify these numbers. SLDS is judged by DeepSeek V4 Pro, so the DeepSeek models could carry a self-preference bias, though both land mid-tier rather than first, which argues against a large effect. And headnote language matters: averaged over all models German scores 45.1, French 44.0, and Italian 38.4, and staying in the source language (44.2) beats translating across it (41.6).
 
 ## A 3B-active specialist nearly matches the frontier in translation
 
-The models perform best in translation: fifteen of seventeen score at least 57 out of 100. Inkling tops it at 67.4, ahead of Kimi K3 (66.9), GLM 5.2 (66.2), Kimi K2.6 (65.3), and Apertus 1.5 70B (65.2). Apertus, the Swiss open model in this lineup, sits with the frontier MoEs here: fifth on the average, and first of all seventeen on court-decision summaries at 71.7.
+The models perform best in translation: fifteen of seventeen score at least 57 out of 100. Inkling tops it at 67.4, with Kimi K3 just behind at 66.9. Apertus 1.5 70B, the Swiss open model in this lineup, sits with the frontier MoEs here: fifth on the average at 65.2, and first of all seventeen on court-decision summaries at 71.7.
 
 
 ![SwiLTra-Bench translation average for all 17 models](figures/translation.png)
 
 
-The efficiency surprise is Hunyuan MT2 30B, a translation specialist with only 3B active parameters (we ran it on SwiLTra-Bench only). It lands tenth at 61.9, within 5.5 points of the best open translator. The models ahead of it activate far more per token, from MiniMax M3's 23B up to Nemotron 3 Ultra's 55B and Kimi K3's 104B, so a model with 8x to 35x fewer active parameters is close to the frontier. The takeaway cuts two ways: a specialist does not win on raw quality, but nothing on the board delivers more per active parameter. If you are compute-bound, Hunyuan MT2 is the translation model to watch; if you only want the best output, the big MoEs still win.
+The efficiency surprise is Hunyuan MT2 30B, a translation specialist with only 3B active parameters (we ran it on SwiLTra-Bench only). It lands tenth at 61.9, within 5.5 points of the best open translator. The models ahead of it activate far more per token, from MiniMax M3's 23B up to Kimi K3's 104B, so a model with 8x to 35x fewer active parameters is close to the frontier. The takeaway cuts two ways: a specialist does not win on raw quality, but nothing on the board delivers more per active parameter. If you are compute-bound, Hunyuan MT2 is the translation model to watch; if you only want the best output, the big MoEs still win.
 
 ## Not all legal text is equally hard to translate
 
@@ -74,7 +72,7 @@ SwiLTra-Bench splits into three document types, and they are not equally hard.
 
 ![Translation judge scores on the three SwiLTra-Bench subsets for all 17 models](figures/translation_subsets.png)
 
-For the strong models the order is consistent: court-decision summaries are easiest, statutory law sits in the middle, press releases are hardest. Apertus leads decision summaries at 71.7, just ahead of GLM 5.2 and Kimi K3 (both 71.0), and every top-tier model ranks the subsets that way. Press releases separate the leaders most: Inkling manages 62.5 and DeepSeek V4 Pro 61.2, while Apertus drops to 56.9, which is what pulls its translation average below the top four.
+For the strong models the order is consistent: court-decision summaries are easiest, statutory law sits in the middle, press releases are hardest. Apertus leads decision summaries at 71.7, just ahead of GLM 5.2 and Kimi K3 (both 71.0), and every top-tier model ranks the subsets that way. Press releases separate the leaders most: Inkling manages 62.5 while Apertus drops to 56.9, which is what pulls its translation average below the top four.
 
 Further down the field that order stops holding. Gemma 4 31B stays near the frontier on decision summaries (63.5) and press releases (59.2) but drops to 48.9 on statutory law, a 14.6-point spread, the widest in the field. OLMo 3.1 32B Think inverts the usual order, with statutory law its best subset (41.0) and press releases its worst (27.3). If your workload is one specific document type, these subset scores matter more than the average.
 
@@ -94,11 +92,11 @@ The `trad_score` in the chart above treats "I don't know" as simply wrong. LEXam
 
 ![Penalty-adjusted MCQ score (idk_score) at 4, 8, and 16 answer options](figures/mcq_idk_score.png)
 
-At four options, 14 of the 16 models come out positive, led by Inkling at 43.1 with Kimi K2.6 (37.9), Gemma 4 31B (33.7), and Nemotron 3 Ultra (33.6) behind it. At eight options only eight are still above zero. At sixteen, exactly one is: Inkling, at +1.8. The DeepSeek variants come closest to break-even (-4.3 and -6.0), then Gemma (-7.5), while LFM2.5 8B (-61.3), OLMo 3.1 32B Think (-48.7), and Apertus 1.5 70B (-48.6) are deep in the red. On a wide option set, almost every model here loses points by answering where it should have declined.
+At four options, 14 of the 16 models come out positive, led by Inkling at 43.1 and Kimi K2.6 at 37.9. At eight options only eight are still above zero. At sixteen, exactly one is: Inkling, at +1.8, with the DeepSeek variants closest behind at -4.3 and -6.0 and LFM2.5 8B deepest in the red at -61.3. On a wide option set, almost every model here loses points by answering where it should have declined.
 
 ![How often each model picks the reserved "I don't know" option](figures/mcq_abstention.png)
 
-The abstention rates explain why, and they run backwards. Every model that abstains meaningfully at four options does so far less at sixteen, exactly where its chance of guessing right falls from one in four to one in sixteen. OLMo 3.1 32B Think is the most willing to decline, on 36.8% of four-option questions but only 3.4% at sixteen; LFM2.5 8B goes from 24.3% to 3.6%, DeepSeek V4 Pro from 7.3% to 0.9%. Llama 3.3 70B never abstains at all, and the two accuracy leaders barely do: Inkling declines on 0.2% of four-option questions and Gemma on 0.9%, and at sixteen they effectively never do (0.1% and 0.0%). Gemma's near-zero abstention mirrors Google's closed models on the same benchmark: in a [separate LEXam-IDK evaluation](https://www.linkedin.com/posts/joelniklaus_the-80-barrier-falls-ensemble-top3-new-activity-7408898384406966273-p7L0/), Gemini 3 Pro never abstains at all, and Gemini 3 Flash, the first Gemini model to ever pick "I don't know", does so on just 1.29% of questions. With almost nobody abstaining on the wide set, every answer scores either +1 or -1, so a model's 16-option `idk_score` is simply its accuracy minus its error rate. That is why it reproduces the accuracy ranking almost exactly: Inkling's 50.9% accuracy is what puts it at +1.8, just above break-even. What the metric adds is the level, not the order.
+The abstention rates explain why, and they run backwards. Every model that abstains meaningfully at four options does so far less at sixteen, exactly where its chance of guessing right falls from one in four to one in sixteen. OLMo 3.1 32B Think is the most willing to decline, on 36.8% of four-option questions but only 3.4% at sixteen, and DeepSeek V4 Pro shows the same collapse from 7.3% to 0.9%. Llama 3.3 70B never abstains at all, and the two accuracy leaders barely do: Inkling declines on 0.2% of four-option questions and Gemma on 0.9%, and at sixteen they effectively never do (0.1% and 0.0%). Gemma's near-zero abstention mirrors Google's closed models on the same benchmark: in a [separate LEXam-IDK evaluation](https://www.linkedin.com/posts/joelniklaus_the-80-barrier-falls-ensemble-top3-new-activity-7408898384406966273-p7L0/), Gemini 3 Pro never abstains at all, and Gemini 3 Flash, the first Gemini model to ever pick "I don't know", does so on just 1.29% of questions. With almost nobody abstaining on the wide set, every answer scores either +1 or -1, so a model's 16-option `idk_score` is simply its accuracy minus its error rate. That is why it reproduces the accuracy ranking almost exactly: Inkling's 50.9% accuracy is what puts it at +1.8, just above break-even. What the metric adds is the level, not the order.
 
 Two caveats. Unparseable answers also score -1, so GLM 5.2, which yields no extractable letter on 17.5% of questions on average, is penalized partly for formatting rather than for guessing. And abstention has to be earned: OLMo's readiness to decline comes with an MCQ average of 27.7%, second-lowest in the field. In practice, only Inkling gets more answers right than wrong at sixteen options, so if a wrong answer is costly you have to add your own confidence check rather than rely on the model to decline.
 
