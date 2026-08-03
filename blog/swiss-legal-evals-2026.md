@@ -140,9 +140,9 @@ Precision shifts the picture as much as size. Kimi K2.6 has more total parameter
 
 This is where the ranking and the hardware pull against each other. Inkling wins the composite but is the heaviest model in the table, needing roughly fourteen H200s because it ships in BF16. Nemotron 3 Ultra, one rank below and statistically indistinguishable, fits on four H100s thanks to NVFP4, making it the most practical of the leaders by a wide margin. And Gemma 4 31B delivers 54.8 overall from a single GPU, 7.5 points behind the top of a field where every model above it needs several.
 
-## Known limitations
+## Limitations
 
-Treat the composite as indicative rather than a normalized benchmark: it mixes 0-100 judge scores with MCQ accuracy rescaled from 0-1, so the four per-group charts are the ground truth and the overall bar is a convenience. SLDS is judged by DeepSeek V4 Pro, so the DeepSeek models' summarization scores may carry a mild self-preference bias. SwiLTra-Bench is scoped to the lowest granularity per dataset here; the full profile adds finer levels and roughly 87k samples per model. And Hunyuan MT2 30B ran translation only, so it is absent from the composite, SLDS, LEXam, and profile charts.
+The composite is indicative, not normalized: it mixes judge scores with rescaled MCQ accuracy, so the per-group charts are the ground truth. SLDS is judged by DeepSeek V4 Pro, so the DeepSeek models' summarization scores may carry a mild self-preference bias. SwiLTra-Bench is scoped to the lowest granularity per dataset here; the full profile adds finer levels and roughly 87k samples per model. And Hunyuan MT2 30B ran translation only, so it is absent from the composite, SLDS, LEXam, and profile charts.
 
 ## Conclusion
 
