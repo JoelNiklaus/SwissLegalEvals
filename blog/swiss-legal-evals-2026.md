@@ -76,7 +76,7 @@ SwiLTra-Bench splits into three document types, and they are not equally hard.
 
 For the strong models the order is consistent: court-decision summaries are easiest, statutory law sits in the middle, press releases are hardest. Apertus leads decision summaries at 71.7, just ahead of GLM 5.2 and Kimi K3 (both 71.0), and every top-tier model ranks the subsets that way. Press releases separate the leaders most: Inkling manages 62.5 and DeepSeek V4 Pro 61.2, while Apertus drops to 56.9, which is what pulls its translation average below the top four.
 
-The pattern breaks for the weaker models, and the breakage is revealing. Gemma 4 31B stays near the frontier on decision summaries (63.5) and press releases (59.2) but drops to 48.9 on statutory law, a 14.6-point spread, the widest in the field. OLMo 3.1 32B Think inverts the usual order, with statutory law its best subset (41.0) and press releases its worst (27.3). If your workload is one specific document type, these subset scores matter more than the average.
+Further down the field that order stops holding. Gemma 4 31B stays near the frontier on decision summaries (63.5) and press releases (59.2) but drops to 48.9 on statutory law, a 14.6-point spread, the widest in the field. OLMo 3.1 32B Think inverts the usual order, with statutory law its best subset (41.0) and press releases its worst (27.3). If your workload is one specific document type, these subset scores matter more than the average.
 
 ## Multiple-choice accuracy collapses as options grow
 
