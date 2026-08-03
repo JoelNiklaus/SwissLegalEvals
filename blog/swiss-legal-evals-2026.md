@@ -108,7 +108,7 @@ Averaging every German, French, and Italian task a model produces (SLDS plus the
 
 ![Mean judge score by Swiss language across SLDS and translation for the 16 comparable models](figures/language_comparison.png)
 
-French comes out highest (53.5 across the 16 comparable models), German is close behind (53.0), and Italian is last (50.5). The gap is about three points, German and French stay within half a point of each other, and Italian is the lowest of the three for 11 of the 16 models. The likely cause is data volume, since Italian is the smallest of the three languages in Swiss legal corpora and on the open web. LEXam is left out of this cut because it exists only in German and English, and including it would compare the languages on an unequal benchmark mix.
+French comes out highest (53.5 across the 16 comparable models), German is close behind (53.0), and Italian is last (50.5). The gap is about three points, German and French stay within half a point of each other, and Italian is the lowest of the three for 11 of the 16 models. The likely cause is data volume, since Italian is the smallest of the three languages in Swiss legal corpora and on the open web. LEXam is left out because it exists only in German and English, which would make the comparison unequal.
 
 ## Model sizes and the hardware to run them
 
@@ -134,9 +134,7 @@ Two numbers decide the cost of serving a model: total parameters set how much me
 | Hunyuan MT2 30B            |   30B |     3B | BF16      |   ~60 GB | 1x H100       |
 | LFM2.5 8B                  |  8.5B |     1B | BF16      |   ~17 GB | 1x 24 GB GPU  |
 
-Weights are total parameters times bytes per parameter (BF16 = 2, FP8 = 1, INT4/FP4 = 0.5), before the KV cache that long context adds; GPU counts assume 80 GB (H100) or 141 GB (H200) cards.
-
-Precision shifts the picture as much as size. Kimi K2.6 has more total parameters than GLM 5.2 (1T versus 753B), but ships as INT4, so its weights (~0.5 TB) are a third of GLM's BF16 footprint (~1.5 TB). The same inversion appears at the top: Kimi K3 carries nearly three times Inkling's parameters (2.8T versus 975B) yet needs less memory (~1.55 TB versus ~1.9 TB), because it ships mostly quantized while Inkling ships in BF16. Mistral Medium 3.5 is a dense 128B in FP8 (~128 GB), so it fits where a BF16 twin would not. Eleven of the seventeen models need a multi-GPU server; the other six fit on one accelerator, five of them on a single 80 GB H100.
+Weights are total parameters times bytes per parameter (BF16 = 2, FP8 = 1, INT4/FP4 = 0.5), before the KV cache that long context adds; GPU counts assume 80 GB (H100) or 141 GB (H200) cards. Precision shifts the picture as much as size. Kimi K2.6 has more total parameters than GLM 5.2 (1T versus 753B), but ships as INT4, so its weights (~0.5 TB) are a third of GLM's BF16 footprint (~1.5 TB). The same inversion appears at the top: Kimi K3 carries nearly three times Inkling's parameters (2.8T versus 975B) yet needs less memory (~1.55 TB versus ~1.9 TB), because it ships mostly quantized while Inkling ships in BF16. Mistral Medium 3.5 is a dense 128B in FP8 (~128 GB), so it fits where a BF16 twin would not. Eleven of the seventeen models need a multi-GPU server; the other six fit on one accelerator, five of them on a single 80 GB H100.
 
 This is where the ranking and the hardware pull against each other. Inkling wins the composite but is the heaviest model in the table, needing roughly fourteen H200s because it ships in BF16. Nemotron 3 Ultra, one rank below and statistically indistinguishable, fits on four H100s thanks to NVFP4, making it the most practical of the leaders by a wide margin. And Gemma 4 31B delivers 54.8 overall from a single GPU, 7.5 points behind the top of a field where every model above it needs several.
 
