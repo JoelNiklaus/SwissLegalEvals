@@ -74,7 +74,7 @@ Further down the field that order stops holding. Gemma 4 31B stays near the fron
 
 ## Multiple-choice accuracy collapses as options grow
 
-Every model degrades from 4 to 16 answer options, and the drop is steep.
+Every model degrades from 4 to 16 answer options, and the drop is steep. Multiple choice is the least realistic task in this set, since legal work rarely arrives as a labelled list of options: read it as a measure of exam-style background knowledge rather than of day-to-day usefulness.
 
 ![LEXam MCQ accuracy at 4, 8, and 16 answer options](figures/mcq_scaling.png)
 
@@ -102,7 +102,7 @@ Averaging every German, French, and Italian task a model produces (SLDS plus the
 
 ![Mean judge score by Swiss language across SLDS and translation for the 16 comparable models](figures/language_comparison.png)
 
-French comes out highest (53.5 across the 16 comparable models), German is close behind (53.0), and Italian is last (50.5). The gap is about three points, German and French stay within half a point of each other, and Italian is the lowest of the three for 11 of the 16 models. The likely cause is data volume, since Italian is the smallest of the three languages in Swiss legal corpora and on the open web. LEXam is left out because it exists only in German and English, which would make the comparison unequal.
+French comes out highest (53.5 across the 16 comparable models), German is close behind (53.0), and Italian is last (50.5). The gap is about three points, German and French stay within half a point of each other, and Italian is the lowest of the three for 11 of the 16 models. Apertus 1.5 70B is the sole exception in the other direction: Italian (53.4) is its strongest language, possibly a result of its heavily multilingual training mix. The likely cause of the general gap is data volume, since Italian is the smallest of the three languages in Swiss legal corpora and on the open web. LEXam is left out because it exists only in German and English, which would make the comparison unequal.
 
 ## Model sizes and the hardware to run them
 
@@ -138,7 +138,7 @@ The composite is indicative, not normalized: it mixes judge scores with rescaled
 
 ## Conclusion
 
-The open frontier on Swiss legal tasks is close, and only one model is broad. Inkling leads three of the four groups, but by less than the uncertainty on the score, and the six models behind it finish within 2.1 points of each other. The right pick depends on the job and the hardware: Inkling or Kimi K3 for translation if you can serve them, Nemotron 3 Ultra for summarization and the best quality per GPU among the leaders, and Gemma 4 31B when you need near-frontier quality on a single accelerator. Apertus 1.5 70B makes the specialization point most sharply: the best model in the field at translating court decisions, yet thirteenth of sixteen overall because summarization (38.0) and multiple choice (33.8) pull it down. Absolute quality is not there yet either: the strongest model scores 67.7 on open legal exam questions and 50.9 on 16-option multiple choice, and no other model clears 48 on the latter, so a lawyer still has to check the output on real matters.
+The open frontier on Swiss legal tasks is close, and only one model is broad. Inkling leads three of the four groups, but by less than the uncertainty on the score, and the six models behind it finish within 2.1 points of each other. The right pick depends on the job and the hardware. If you can serve anything, Inkling is the best model overall and Nemotron 3 Ultra the best summarizer. If the GPU budget is the binding constraint, the value picks are Apertus 1.5 70B for translation, DeepSeek V4 Flash for summarization, and Gemma 4 31B for LEXam, each the strongest at its task among the models that fit on one or two accelerators. Apertus makes the specialization point most sharply: the best model in the field at translating court decisions, yet thirteenth of sixteen overall because summarization (38.0) and multiple choice (33.8) pull it down. Absolute quality is not there yet either: the strongest model scores 67.7 on open legal exam questions and 50.9 on 16-option multiple choice, and no other model clears 48 on the latter, so a lawyer still has to check the output on real matters.
 
 ## What this means for the Swiss Justice Base Model
 
