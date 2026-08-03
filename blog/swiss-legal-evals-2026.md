@@ -134,7 +134,7 @@ Two numbers decide the cost of serving a model: total parameters set how much me
 | Hunyuan MT2 30B            |   30B |     3B | BF16      |   ~60 GB | 1x H100       |
 | LFM2.5 8B                  |  8.5B |     1B | BF16      |   ~17 GB | 1x 24 GB GPU  |
 
-Weights are total parameters times bytes per parameter (BF16 = 2, FP8 = 1, INT4/FP4 = 0.5), before the KV cache that long context adds; GPU counts assume 80 GB (H100) or 141 GB (H200) cards. Kimi K3 is the exception to that arithmetic: it quantizes its experts to 4 bits but keeps attention and embeddings in BF16, so its published checkpoint is ~1.55 TB rather than the ~1.4 TB a flat 4-bit rule would predict. We ran local vLLM models above the weight-only minimum for 64k-context throughput (Apertus on 4 H100s, Mistral Medium on 8).
+Weights are total parameters times bytes per parameter (BF16 = 2, FP8 = 1, INT4/FP4 = 0.5), before the KV cache that long context adds; GPU counts assume 80 GB (H100) or 141 GB (H200) cards.
 
 Precision shifts the picture as much as size. Kimi K2.6 has more total parameters than GLM 5.2 (1T versus 753B), but ships as INT4, so its weights (~0.5 TB) are a third of GLM's BF16 footprint (~1.5 TB). The same inversion appears at the top: Kimi K3 carries nearly three times Inkling's parameters (2.8T versus 975B) yet needs less memory (~1.55 TB versus ~1.9 TB), because it ships mostly quantized while Inkling ships in BF16. Mistral Medium 3.5 is a dense 128B in FP8 (~128 GB), so it fits where a BF16 twin would not. Eleven of the seventeen models need a multi-GPU server; the other six fit on one accelerator, five of them on a single 80 GB H100.
 
