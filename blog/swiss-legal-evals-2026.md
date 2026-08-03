@@ -112,7 +112,7 @@ French comes out highest (53.5 across the 16 comparable models), German is close
 
 ## Model sizes and the hardware to run them
 
-Two numbers decide the cost of serving a model: total parameters set how much memory the weights occupy, active parameters set how much compute each token costs. The field runs from 8.5B to 2.8T total parameters, and native precision matters as much as parameter count.
+Two numbers decide the cost of serving a model: total parameters set how much memory the weights occupy, active parameters set how much compute each token costs. The field spans 8.5B to 2.8T total parameters, but the precision a checkpoint ships in often decides how many GPUs you need.
 
 | Model                      | Total | Active | Precision | Weights  | Runs on       |
 |----------------------------|------:|-------:|-----------|---------:|---------------|
