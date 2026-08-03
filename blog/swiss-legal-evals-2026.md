@@ -64,7 +64,7 @@ The models perform best in translation: fifteen of seventeen score at least 57 o
 ![SwiLTra-Bench translation average for all 17 models](figures/translation.png)
 
 
-The efficiency surprise is Hunyuan MT2 30B, a translation specialist with only 3B active parameters (we ran it on SwiLTra-Bench only). It lands tenth at 61.9, within 5.5 points of the best open translator. The models ahead of it activate far more per token, from MiniMax M3's 23B up to Kimi K3's 104B, so a model with 8x to 35x fewer active parameters is close to the frontier. The takeaway cuts two ways: a specialist does not win on raw quality, but nothing on the board delivers more per active parameter. If you are compute-bound, Hunyuan MT2 is the translation model to watch; if you only want the best output, the big MoEs still win.
+The efficiency surprise is Hunyuan MT2 30B, a translation specialist with only 3B active parameters (we ran it on SwiLTra-Bench only). It lands tenth at 61.9, within 5.5 points of the best open translator. The models ahead of it activate far more per token, from MiniMax M3's 23B up to Kimi K3's 104B, so a model with 8x to 35x fewer active parameters is close to the frontier. It does not win on raw quality, but no model here gets more out of each active parameter, which makes it the translation model to watch if you are compute-bound. If you only want the best output, the big MoEs still win.
 
 ## Not all legal text is equally hard to translate
 
