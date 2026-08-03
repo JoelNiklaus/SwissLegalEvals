@@ -53,6 +53,7 @@ DISPLAY_NAMES = {
     "GLM-5.2": "GLM 5.2",
     "Hy-MT2-30B-A3B": "Hunyuan MT2 30B",
     "Kimi-K2.6": "Kimi K2.6",
+    "Kimi-K3": "Kimi K3",
     "Llama-3.3-70B-Instruct": "Llama 3.3 70B",
     "LFM2.5-8B-A1B": "LFM2.5 8B",
     "MiniMax-M3": "MiniMax M3",
@@ -63,6 +64,7 @@ DISPLAY_NAMES = {
     "Apertus-v1.5-70B": "Apertus 1.5 70B",
     "gemma-4-31B-it": "Gemma 4 31B",
     "gpt-oss-120b": "gpt-oss 120B",
+    "Inkling": "Inkling",
 }
 
 # Display name -> Hugging Face org that publishes it (source of the logo).
@@ -72,6 +74,7 @@ ORG_BY_MODEL = {
     "GLM 5.2": "zai-org",
     "Hunyuan MT2 30B": "tencent",
     "Kimi K2.6": "moonshotai",
+    "Kimi K3": "moonshotai",
     "Llama 3.3 70B": "meta-llama",
     "LFM2.5 8B": "LiquidAI",
     "MiniMax M3": "MiniMaxAI",
@@ -82,12 +85,15 @@ ORG_BY_MODEL = {
     "Apertus 1.5 70B": "swiss-ai",
     "Gemma 4 31B": "google",
     "gpt-oss 120B": "openai",
+    "Inkling": "thinkingmachines",
 }
 
 # One distinct, roughly brand-aligned colour per model.
 BRAND_COLORS = {
     "Nemotron 3 Ultra 550B": "#76B900",
     "Kimi K2.6": "#6D5AE6",
+    "Kimi K3": "#9C8CF5",
+    "Inkling": "#1F2937",
     "DeepSeek V4 Pro": "#4D6BFE",
     "DeepSeek V4 Flash": "#8AA0FF",
     "MiniMax M3": "#E1275C",

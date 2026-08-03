@@ -244,6 +244,8 @@ The scripts in `scripts/` are mostly for the Hopper Slurm environment used for t
 | `scripts/count_task_samples.py`  | Print per-task and per-group sample counts.             |
 | `scripts/run_cap_compare.sh`     | Run 16k vs 32k generation-cap experiments.              |
 | `scripts/analyze_cap_compare.py` | Summarize cap-comparison outputs.                       |
+| `scripts/check_mcq_integrity.py` | Verify MCQ runs scored the prompts they generated from. |
+| `scripts/bootstrap_composite.py` | 95% intervals for the composite, by resampling tasks.   |
 
 ## Implementation notes
 
