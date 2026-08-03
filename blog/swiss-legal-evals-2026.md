@@ -86,7 +86,7 @@ Every model degrades from 4 to 16 answer options, and the drop is steep.
 
 Inkling falls from 71.4% at four options to 50.9% at sixteen, Kimi K2.6 from 67.9% to 44.0%, Nemotron from 63.1% to 41.7%. Nobody escapes the pattern, and the ordering of models is broadly stable across the three widths.
 
-Model size does not protect against it. Gemma 4 31B posts an MCQ average of 56.0, second only to Inkling (60.7) and ahead of every 500B-class model here: on these exam questions a 31B dense model beats much larger MoEs. Apertus 1.5 70B is the other side of that coin, near-frontier on translation (65.2) but 33.8 on MCQ, third-lowest and about 22 points behind Gemma at every option count. Strong Swiss-language generation does not imply exam-style selection.
+Model size does not protect against it. Gemma 4 31B posts an MCQ average of 56.0, second only to Inkling (60.7) and ahead of every 500B-class model here: on these exam questions a 31B dense model beats much larger MoEs. Apertus 1.5 70B is the other side of that coin, near-frontier on translation (65.2) but 33.8 on MCQ, third-lowest and about 22 points behind Gemma at every option count. Writing good legal German, French, and Italian is evidently a different skill from picking the right answer out of a list.
 
 ## Models guess instead of admitting uncertainty
 
